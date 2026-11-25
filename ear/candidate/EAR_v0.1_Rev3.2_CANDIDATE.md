@@ -4,7 +4,7 @@
 
 Date: 2026-11-24 (ET). Consolidated by Claude (Specification Lead) on founder authorization of 2026-11-24 (specification consolidation only).
 
-**Candidate draft 3.** Applies the draft-2 hostile-review corrections P0-1, P0-2, P0-3, P1-1 and Additional 1 and 2 (GPT, 2026-11-24), documented in `ear/review/EAR_Rev3.2_Draft2_Response_Claude_2026-11-24.md`. Draft 2 (SHA-256 61ded4a1c3d024ea7b8ae1bf77ccc9f3a09176a3fad30663b4d4d632aededd15) applied INT-01 to INT-05 and IC-1 to IC-6 (`ear/review/EAR_Rev3.2_Integration_Response_Claude_2026-11-24.md`). Draft 1 (583ab609…) and draft 2 are superseded and remain in git history.
+**Candidate draft 4.** Integrates the "Draft 3: Targeted Clarifications" proposal (items A–E; founder-relayed; the document does not name its author) with the amendments set out in `ear/review/EAR_Rev3.2_Draft3_Clarifications_Response_Claude_2026-11-24.md`. Draft 3 (SHA-256 f647c36bfd4e632052bdcca13eb0b92f64a2964445d0f3021c5ee47f5fdc47ab) applied P0-1 to P0-3, P1-1 and Additional 1 and 2 (`ear/review/EAR_Rev3.2_Draft2_Response_Claude_2026-11-24.md`). Draft 2 (61ded4a1…) applied INT-01 to INT-05 and IC-1 to IC-6. Drafts 1 to 3 are superseded and remain in git history.
 
 **Boundary.** This document authorizes nothing. It is not a freeze. It does not authorize implementation, construction or execution of an oracle, broker contact, paper trading or live trading.
 
@@ -91,6 +91,7 @@ R1 is the review of Rev 3.1. Its findings and proposed revisions R-01 to R-14 we
 | Event-delivery completeness (A-12″) | **the boundary of every safety claim. Not establishable inside the model** |
 | Independent verification | **none** |
 | Draft 2 integration corrections | INT-01 to INT-05 corrected or clarified; IC-1 to IC-6 applied. All **DERIVED**; none tested |
+| Draft 4 integration | proposal A (traceability, A-map), B (reactivation), C (consume), D (typed encoding), E (status envelope), each adopted with amendments. New OQ-R1. All **DERIVED**; none tested |
 | Draft 3 corrections | P0-1 SR gate, P0-2 post-proposal Π, P0-3 single commitment identity, P1-1 basis boundary, delta hull H_Δ (draft-2 hull soundness claim withdrawn), injective identifier encoding. All **DERIVED**; none tested |
 
 ---
@@ -146,9 +147,18 @@ Sources: R4 CA-1 (identity), R7 §2 (τ), R8 AM-11 and R9 AM-11′ (ν).
   - Neither available → the transition is out of contract (UNRESOLVED).
 - **Version identity ν** = (exec_id, broker version, canonical payload). It binds only with the **full** field set, and only if A-11⁗ is declared for that path. Binds must be order-preserving and one-to-one per exec_id; otherwise **CONFLICT (NUMBERING_INCONSISTENT)**.
 - **Canonicalization (Additional 2, REPLACES "ASCII-normalized identifiers") [OPERATIVE].**
-  - **Encoding of I:** the fields in the fixed order listed for τ_D, each as a tag byte (present / explicit null / absent) followed by a 64-bit big-endian length and the value bytes. Length prefixes make concatenation unambiguous ("ab" + "c" ≠ "a" + "bc").
+  - **Typed canonical encoding (proposal D, adopted) [OPERATIVE].** I is encoded under a **schema version** that fixes the field order, field type, nullability and byte representation. Each field is encoded as:
+    - a field tag identifying its position and declared type;
+    - a presence tag (present / explicit null / absent);
+    - a 64-bit **unsigned** big-endian byte length;
+    - the canonical value bytes.
+
+    Length prefixes make concatenation unambiguous ("ab" + "c" ≠ "a" + "bc").
+  - **Enumerated fields** (kind, side): a fixed, versioned enumeration-to-byte mapping. A value outside the declared enumeration is malformed.
+  - **Out-of-type or out-of-range field:** malformed. Malformed means the identity is incomplete: corroboration only, never a bind (§3.2 above).
+  - **Schema or parser change:** recorded in the derivation lineage. It creates a new lineage (I9-ext) and requires explicit migration treatment (§7.6).
   - **Identifiers** (account, instrument, exec_id, order_id): the exact byte string the broker sent, after decoding only the transport encoding declared for that path (for example a JSON string → its UTF-8 bytes). **Prohibited:** case folding; trimming or collapsing whitespace; Unicode normalization (NFC, NFKC, …); stripping leading zeros; reinterpreting a string as a number or a number as a string; truncation; any lossy mapping.
-  - **Path representation differences** (the same broker id arriving as JSON number 123 on one path and string "123" on another) may be reconciled only by a **declared, injective per-path decoding**, pinned by parser version and recorded in the lineage. An undeclared difference leaves the identities **distinct**.
+  - **Path representation differences** (the same broker id arriving as JSON number 123 on one path and string "123" on another) may be reconciled only by a decoding that is **declared, version-pinned and injective over the entire allowed input domain of that field** (proposal D). Otherwise the identities remain **distinct**, and the dedup protocol then reports FORK → CONFLICT. *Amendment to D:* the proposal's alternative "or unresolved" is dropped. "Distinct" is the defined outcome, and it already yields a structural condition through FORK.
   - **Integers:** signed 64-bit, big-endian two's complement. A value outside that range is malformed.
   - **Why this direction:** splitting one broker identity into two is fail-safe. The second claim meets the same predecessor and is detected as FORK → CONFLICT, which costs availability. **Collapsing two broker identities into one is fail-unsafe:** a distinct transition is discarded as a duplicate, and F_d undercounts (CX-61). Every permitted transformation must therefore be injective over the broker's identifier space. **DERIVED.**
   - Hash: SHA-256 over the encoding. Collision resistance is **ASSUMED**.
@@ -361,7 +371,22 @@ A correction that arrives is applied (it is evidence). The result is FINAL_VIOLA
   - Another proposal's commit advances the revision, so the decision D no longer matches and must be re-evaluated. Its own reservation's R is then counted, as in V14 and V36.
   - A second commit of the same proposal_id hits step 3.
   - No reservation exists outside step 6. No two reservations can be created on one revision.
-- Freshness is evaluated at t_L. `consume` follows the same pattern.
+- Freshness is evaluated at t_L.
+- **Consume linearization (proposal C, adopted with amendments) [OPERATIVE].** REPLACES "`consume` follows the same pattern".
+  - **Lock:** consume runs under the same serialized store lock as event application, commit, expiry, release, invalidation and reactivation (fold discipline, §3.1).
+  - **Preconditions**, checked inside the lock:
+    - the reservation is ACTIVE and unexpired at t_L;
+    - its configuration hash equals the current configuration (otherwise AM-14′ governs), and its model version lies in the current lineage;
+    - the payload equals the committed proposal payload byte for byte (Rev 3.1 payload binding);
+    - Π(r, σ) holds on the actual current state σ, which already counts r exactly once (§7.3).
+  - *Amendment to C (revision binding):* there is **no** revision-equality check against the commit revision. That check would always fail after any intervening event. Π is re-evaluated on the current revision instead.
+  - **Any precondition fails:** no lifecycle change and no submission permission. An L1 consume-refusal record is appended with its reason codes. If Π failed only on time-based freshness, the reservation stays ACTIVE; it is not suspended at consume.
+  - **All pass:** one fold appends the L1 consume record and changes the reservation ACTIVE → CONSUMED and the order AUTHORIZED → SUBMITTED together (§7.2). No intermediate revision exists.
+  - **Submission identity** = SHA-256 of the canonical order payload (plus the broker client-order id once G-07 defines one).
+    - A duplicate consume with the same reservation and the same submission identity is idempotent: it returns the existing CONSUMED result.
+    - A different submission identity for an already-consumed reservation is **refused**, with an L3 integrity alert CONSUME_IDENTITY_CONFLICT.
+  - *Amendment to C (conflict classification):* that alert is **not** an SR condition. The refusal prevents any ledger effect, so it carries no exposure uncertainty, and making it structural would let a faulty caller lock the account (C-14, C-18). If a second order nevertheless reaches the broker, it is detected as an unknown order (Rev 3.1 E20), and that path **is** structural.
+  - **Scope:** this atomicity ends at the model's consume linearization point. It does **not** establish atomicity with adapter transmission or broker acceptance (G-07, R-16).
 - **D_max** [CONDITIONAL-ON-FD-10]: (a) withdrawn as a safety rule; or (b) t_L − t_eval ≤ D_max, labelled an intent-age policy.
 - **expires_at = min(t_L + TTL, snapshot.received_at + S_lim)** [CONDITIONAL-ON-FD-7, required per R4].
 - **[SUPERSEDED]** R1 R-12's epsilon (R2); R2 R-12′'s ambiguous use of decision.as_of (R3).
@@ -386,6 +411,18 @@ A correction that arrives is applied (it is evidence). The result is FINAL_VIOLA
 - **Late events.** A broker event for an order in a pre-submission terminal state follows Rev 3.1 T22 (order UNKNOWN, R re-reserved). This is the only way such an order is counted again. **DERIVED.**
 - **Rev 3.1 mapping.** Rev 3.1 §2.9's reservation state RELEASED for "reject, cancel, fill complete" (after submission) is represented here as CONSUMED with a terminal order state. The counted R is identical. RELEASED here is the pre-consume release of FD-13 only (C-15).
 - `release(reservation_id)` is allowed before consume [CONDITIONAL-ON-FD-13].
+- **Suspension causes.** A SUSPENDED reservation records the set of causes that suspended it: Π_FAIL (R-15″) and BASIS_INCOMPLETE (§7.4). Further causes are added as they arise. Reactivation requires every recorded cause to have cleared.
+- **Reactivation (proposal B, adopted with amendments) [OPERATIVE].** Reactivation SUSPENDED → ACTIVE is a **new authorization event**, not a restoration of the original one. It is permitted only if all of the following hold, checked in one serialized fold:
+  1. the reservation is SUSPENDED and its commitment is counted exactly once (§7.2 mapping);
+  2. it has not expired, been released or been invalidated. *TTL is not reset:* expires_at is fixed at commit;
+  3. SR holds and BOUNDED holds (status row 8 or 9);
+  4. Consistency CORROBORATED, Freshness FRESH, and the other evidence requirements of Π;
+  5. **every** basis recorded for the reservation (the commit basis and any earlier reactivation bases) is INTACT. *Amendment to B:* the proposal's alternative "or a separately authorized replacement basis" is **not adopted**. It would create an authorization path with no defined authority, procedure or basis semantics. A reservation whose basis cannot be restored to INTACT stays SUSPENDED until it expires or is released; a fresh proposal and commit is the replacement path;
+  6. Π(r, σ) holds on the actual current state σ, with the existing commitment counted exactly once (§7.3).
+- **If all hold,** the fold appends an **L1 reactivation record** carrying its own basis: p_b = (that record's position) − 1, the model version, the configuration hash and H_c, exactly as for a commit (§7.1 and §7.4). It also writes the L3 disposition SUSPENDED → ACTIVE, with that record as its cause.
+- **If any fails,** the reservation stays SUSPENDED and no permission is created.
+- A BASIS_IMPUGNED or INVALIDATED reservation is never reactivated.
+- **Later impugnment** of any basis in the chain → INVALIDATED (if the reservation is ACTIVE or SUSPENDED), under the §7.4 table. This is conservative and can over-deny, because an impugned *original* basis invalidates even when a later reactivation basis is intact (DERIVED choice; C-19).
 - **OVER_LIMIT** ⇔ U > L (added to I3 and I8).
 - **Invariant (unchanged in substance):** every unexpired reservation's commitment is counted in B or S, whether ACTIVE or SUSPENDED, and lifecycle changes of the reservation alone never change B or S.
 - **[SUPERSEDED]** R2 R-15 (one-sided; A_raw-only reactivation); R3 R-15′'s "every other ACTIVE" wording; draft 2's "every unexpired reservation contributes its order's R", which was readable as a second summand (CX-59). FD-9 is moot.
@@ -465,7 +502,7 @@ Inputs:
 - the choice set X(β) = the product, over executions x, of the admissible-cut set at β (A-11-ORD mode) or of C(x, β) (H_Δ mode, §3.5).
 
 **Structural-resolution predicate SR (P0-1) [OPERATIVE].** SR holds iff **none** of the following holds anywhere in the account's ledger:
-1. any open L3 entry of kind SEQ_CONTRACT or CONFLICT, any subtype: FORK, STALE, KEY_MISMATCH, ORDER_CONTRADICTION, NUMBERING_INCONSISTENT, MANIFEST_CLAIM_FALSIFIED, overfill, proposal or snapshot conflicts;
+1. any open L3 entry of kind SEQ_CONTRACT or CONFLICT, any subtype: FORK, STALE, KEY_MISMATCH, ORDER_CONTRADICTION, NUMBERING_INCONSISTENT, MANIFEST_CLAIM_FALSIFIED, overfill, snapshot conflicts. *(Draft 4: "proposal conflicts" removed. R_PROPOSAL_CONFLICT and CONSUME_IDENTITY_CONFLICT are caller refusals with no ledger effect: integrity alerts, not structural conditions. See §8 A-map.)*;
 2. any PENDING transition, or any D26 / D27 hold;
 3. any version, applied execution or order of unknown quantity (T2-U, or an L2 entry with qty absent);
 4. any pre-bootstrap item whose R7 §10 per-mode disposition is UNRESOLVED, CONFLICT or held (including held anchor corrections and undismissed unknown-old executions);
@@ -473,6 +510,38 @@ Inputs:
 6. for β ∈ {β_c, head}: ExecutionState(x, β) is UNRESOLVED or **empty** for some x, or X(β) is empty. *An empty set is never read as {0}, and never satisfies a universal condition vacuously.*
 
 SR is global to the account: one unresolved item anywhere makes SR false (C-14). **DERIVED.**
+
+**Structural-state traceability (proposal A, adopted with amendments) [OPERATIVE].**
+- **Visibility.** Every structural condition that can affect execution identity, transition ordering, quantity, attribution, bootstrap disposition or authorization has either an L3 disposition or an explicitly defined derived state (SR clause 6) that SR reads directly. No ingestion, reconciliation, bootstrap, migration or lifecycle path may create an unresolved structural condition that SR cannot see.
+- **Mapping obligation.** The A-map below records, for each condition: its origin, the L1 reference, the L2 target, the L3 disposition, the SR clause that reads it, and its resolution operation.
+- **Closure.** A condition stays open until its specified resolution operation is applied and recorded in L3. The resolution names the condition it resolves and the evidence or authorized operation it relies on. The original condition and its resolution remain permanently auditable.
+- *Amendment to A (evidence-driven resolution):* the proposal's sentence "Receipt of additional evidence alone does not close it" is **narrowed**. Evidence closes a condition **only** through a resolution rule that names that condition type and the evidence class that resolves it. An example is HISTORY FILL on the arrival of the named predecessor, which closes PENDING. That rule's application is the resolution operation. Evidence that is merely consistent with resolution never closes anything. Without this amendment, every PENDING would be permanent, which contradicts §3.4.
+- **No defined resolution.** A condition with no defined resolution operation remains open until an explicitly authorized re-bootstrap (FD-18) or another governance operation closes the affected ledger scope. **No condition expires by timeout** (consistent with Rev 3.1 line 547).
+- **SR completeness obligation.** In every reachable state, if any structural condition is unresolved, SR is false. If the model cannot establish whether a condition is resolved, SR is false.
+- The map's completeness is **DERIVED, not verified**. Three rows depend on Rev 3.1 rules that this candidate does not restate.
+
+**A-map (structural conditions → SR):**
+
+| Condition | Origin | L1 ref | L2 target | L3 disposition | SR | Resolution operation |
+|---|---|---|---|---|---|---|
+| SEQ_CONTRACT | sequence ingestion (R-03″ rows 1, 6 and 7; undeclared epoch) | the item | — | SEQ_CONTRACT | 1 | **none defined** → FD-18 / governance (C-18) |
+| CONFLICT, same broker_seq with different content | ingestion (R-03″ row 3) | both items | — | CONFLICT | 1 | sequence-resolution item (R1 R-08) naming broker_seq |
+| FORK, STALE, KEY_MISMATCH, ORDER_CONTRADICTION, NUMBERING_INCONSISTENT | dedup protocol (§3.4, §3.2) | both claims | the L2 entries of x | CONFLICT (subtype) | 1 | **none defined** (AM-10: "neither claim preferred") → governance (C-18) |
+| MANIFEST_CLAIM_FALSIFIED | bootstrap (AM-16′) | the falsifying item and the manifest | the manifest claim | CONFLICT | 1 | the revocation M1 → M1q plus the basis recheck (defined) |
+| Overfill (q > R) | E05 | the fill | the order and the L2 entry | CONFLICT | 1 | per Rev 3.1 E05 / D27 (not restated here) |
+| Snapshot conflict (equal W, different content) | snapshot ingestion | both snapshots | — | Consistency INCONSISTENT | 1 (status row 1) | broker resolution (Rev 3.1 §2.6.2) |
+| PENDING | dedup (§3.4) | the transition | the L2 entry | PENDING | 2 | HISTORY FILL / APPLY on arrival of the named predecessor (defined, evidence-driven) |
+| D26 / D27 hold | correction ingestion | the correction | the L2 entry | hold | 2 | per Rev 3.1 D26 / D27 (not restated here) |
+| Unknown quantity (T2-U, qty absent) | ingestion | the item | the L2 entry or order | UNRESOLVED | 3 | an authoritative broker response giving the quantity (Rev 3.1 line 547) |
+| Unresolved pre-bootstrap item | bootstrap (R7 §10) | the item | the L2 entry or anchor | UNRESOLVED / CONFLICT / held | 4 | exec_id-level broker dismissal; anchor arrival (R7 §5); otherwise governance |
+| Structural evidence failure (Rev 3.1 §2.8, V54) | evidence acceptance | the item | — | Consistency failure | 5 | per Rev 3.1 §2.8 (not restated here) |
+| CHANNEL_SUSPECT | attribution (AM-17) | the item | — | CHANNEL_SUSPECT | 5, only under FD-20(a) | **FD-20 (unresolved)** |
+| Unknown order (E20) | ingestion | the item | the order | UNKNOWN order | 3 if its remaining quantity is unknown; otherwise counted in B and S | authoritative broker response |
+| Empty or UNRESOLVED ExecutionState(x, β) | derived from L2 and L3 | — | x | none: a derived state | 6 | resolves when its underlying conditions resolve |
+| *Not structural:* R_PROPOSAL_CONFLICT, CONSUME_IDENTITY_CONFLICT | caller requests | the request | — | integrity alert | — | none needed; no ledger effect |
+| *Not structural:* an evaluation fault or a missing reason-code set (proposal E) | evaluation | — | — | evaluation fault (per call) | — | per call: that evaluation is DENY |
+
+- **Finding from building the map (C-18):** at least two families have **no defined resolution** (SEQ_CONTRACT, and the dedup CONFLICT subtypes). Under A, any one of them blocks the whole account (global SR) until founder-authorized governance. That is the intended fail-closed behaviour, but its availability cost is now explicit. **OQ-R1** (new) asks for a resolution operation per condition.
 
 Status is the **first** row that applies.
 
@@ -490,6 +559,13 @@ Status is the **first** row that applies.
 
 - "Quiescent" is as in Rev 3.1: no working, authorized or unknown orders and no pending events.
 - **Reason codes:** every condition that holds (each row's condition, and each SR clause that fails) is listed as a reason code, whatever the status. So a GAP that also carries a CONFLICT reports GAP with CONFLICT among its codes.
+- **Status envelope (proposal E, adopted with amendments) [OPERATIVE].** The seven Rev 3.1 status values are unchanged. This settles the draft-3 design call in favour of seven statuses plus the envelope; see the response document for the reviewer's position.
+  - **Required fields:** every status result carries the status and a machine-readable reason-code set listing every applicable status condition and every failed SR clause.
+  - *Amendment to E:* the set is **explicit, never omitted**. A clean ledger carries the single code NONE, so an absent field can be told apart from "no conditions".
+  - UNKNOWN with STRUCTURAL_UNRESOLVED is distinct from UNKNOWN caused by an absent, stale, conflicting or epoch-less snapshot. Consumers must not infer permission from the top-level status alone.
+  - **Denial:** authorization is denied whenever BOUNDED is false, SR is false, or any other Π predicate fails.
+  - *Amendment to E (fault classification):* failure to produce or validate the reason-code set is an **evaluation fault**. That evaluation and any commit, consume or reactivation relying on it are DENY. It is **not** a persistent structural condition. Under A, a persistent structural condition with no resolution operation would lock the account until re-bootstrap, so a transient serialization fault would become a lockout (C-18).
+  - **Adapter side:** "no downstream adapter or consumer may discard the reason-code set or substitute a status-only permission rule" is an **adapter acceptance requirement** (G-07, R-16). It is UNVERIFIED and outside the model's control.
 - **BOUNDED.** Rows 1–7 are UNBOUNDED. Rows 8 and 9 are reachable only with SR, so they have no T2-U item and no structural failure. Hence BOUNDED ⇔ row 8 or 9, which agrees with Rev 3.1 line 148 (DERIVED). The draft-2 "Bounded" column, which marked RECONCILED as bounded unconditionally, is SUPERSEDED (CX-57).
 - **No fall-through (DERIVED).** RECONCILED, AWAITING and MISMATCH occur only at rows 8 and 9, which lie after row 7. Every structural state listed in SR, including CONFLICT, FORK, ORDER_CONTRADICTION, NUMBERING_INCONSISTENT, unknown quantity, unresolved pre-bootstrap items and empty admissible sets, therefore stops at row 7 or earlier.
 - Buffered events (received above H_e + 1) exist **iff** row 3's condition holds. They have no separate status.
@@ -623,6 +699,14 @@ A snapshot of a non-bootstrap epoch is compared, never adopted (P-3).
 | Draft 2 §7.2 "every unexpired reservation contributes its order's R" | single commitment identity order_id; B, S = Σ R over WORKING orders | readable as a second summand; handoff unspecified (P0-3, CX-59) | draft-2 review |
 | Draft 2 §7.1 step 6 "append the L1 commit record; write the L3 basis record" and §7.4 "basis record" | basis inside L1 commit record C; p_b = p_C − 1; fold discipline | two schemas; p_b boundary ambiguous (P1-1, CX-60) | draft-2 review |
 | Draft 2 §3.5 hull of chain states "{0} ∪ {q_i : not forced after β}", **DERIVED sound** | H_Δ | unsound without A-11-ORD (CX-62); claim withdrawn | draft-2 review |
+| Draft 3 §7.1 "`consume` follows the same pattern" | consume linearization (proposal C, amended) | unspecified preconditions and idempotency | draft-3 clarifications |
+| Draft 3 §3.2 untyped tag-length encoding | typed canonical encoding with schema version (proposal D) | no field types, enumerations or schema lineage | draft-3 clarifications |
+| Draft 3 SR clause 1 "proposal … conflicts" | caller conflicts reclassified as integrity alerts | a caller error could lock the account | draft-3 clarifications |
+| Draft 3 response §1 "design call" (UNKNOWN vs an eighth status) | status envelope (proposal E): seven statuses plus a mandatory reason-code set | settled by adopting E | draft-3 clarifications |
+| Proposal A sentence "Receipt of additional evidence alone does not close it" (unamended) | evidence closes only through a named resolution rule | would make PENDING permanent (CX-65) | draft-3 clarifications |
+| Proposal B clause 5 "or a separately authorized replacement basis" | not adopted; a new proposal and commit is the replacement path | undefined authority (CX-66) | draft-3 clarifications |
+| Proposal C "verifies the relevant revision" | no revision binding; Π re-evaluated on the current revision | always fails, or TOCTOU (CX-68) | draft-3 clarifications |
+| Proposal C "recorded as a conflict"; proposal E "itself a structural failure" | integrity alert; per-call evaluation fault | lockout with no resolution (CX-67) | draft-3 clarifications |
 | Draft 2 §3.2 "ASCII-normalized identifiers" | injective, length-prefixed byte encoding | non-injective normalization can collapse identities (CX-61) | draft-2 review |
 
 ---
@@ -633,6 +717,7 @@ A snapshot of a non-bootstrap epoch is compared, never adopted (P-3).
 |---|---|---|---|---|
 | **OQ-H15** | Define the admissible historical placements of retro-relevant evidence, especially unsequenced events. Required rule: INTACT iff every admissible placement allows; IMPUGNED iff every placement denies; INCOMPLETE iff mixed | §7.4 AM-13′ | the worst-case Π evaluation | **known defect**: the current text labels "some placement denies" as IMPUGNED, which over-reports impugnment. Not yet corrected |
 | **OQ-H16** | Specify the full deterministic execution environment for reproducing Π from the basis: precision and rounding (integers only per A-13, to be confirmed for all derived values), schema and canonicalization versions, collection ordering, clock inputs, every external input, tie-breaking, runtime version | §3.1 I9-ext, §7.4 | "complete by construction" | **CONDITIONAL**; contract not written |
+| **OQ-R1** (new, draft 4) | Define a resolution operation for every structural condition in the §8 A-map that lacks one (SEQ_CONTRACT; the FORK, STALE, KEY_MISMATCH, ORDER_CONTRADICTION and NUMBERING_INCONSISTENT subtypes), or confirm that governance closure (FD-18) is intended for each. Restate the three rows that defer to Rev 3.1 (overfill, D26/D27, §2.8 failures) | §8 A-map | none | OPEN |
 | **OQ-H17** | Define legitimate broker version-counter resets: does a reset create a version epoch; can an execution survive across it; how are old list entries interpreted; keep the broker version distinct from the stream sequence. **Also: cross-namespace ordering (INT-02).** Under what broker guarantee does chain order equal stream-key order (A-11-ORD), and how should ⊥ versions be ordered against keyed ones when A-11-ORD cannot be checked? | §3.2 A-11⁗, §3.4 | none | open |
 | **OQ-H18** | Finality ordering at exact ticks, and the outage boundary cases: an outage before or at the deadline; several outages; an outage during the latency allowance; a blocker arriving or dismissed at the tick; an applied correction and the tick together. Keep T_f, L_n, σ and observed stream health separate | §6.2 | gate W ∧ H ∧ ¬Blocker | provisional; only two examples |
 | **OQ-H19** | Distinguish historical authorization invalidity from policy-migration exposure: a separate POLICY_MIGRATION_EXPOSURE class instead of "treated like BASIS_INCOMPLETE" | §7.6 AM-14′ | BASIS_UNDER_SUPERSEDED_RULES treated like INCOMPLETE | **known defect** (conflation). Not yet corrected |
@@ -664,6 +749,9 @@ A snapshot of a non-bootstrap epoch is compared, never adopted (P-3).
 | C-15 | Rev 3.1 §2.9 reservation state RELEASED (after submission: reject, cancel, fill) is re-expressed as CONSUMED with a terminal order. The counted R is identical, but the state names differ from the frozen text | §7.2 | editorial reconciliation at any freeze |
 | C-16 | H_Δ relies on stream-prefix snapshot semantics (W1 as written). If the broker's snapshots report the internal state at an instant, keyed-after-β transitions can be inside the snapshot, and H_Δ's exclusion of Out is unsound. Snapshot semantics are UNVERIFIED | §3.5, W1 | broker evidence; OQ-H17 (related, not closed) |
 | C-17 | Fold discipline: append and fold are one step. A slow fold delays receipt; a commit waits for the backlog. Liveness only; the safe direction | §3.1, §7.1 | interacts with the IC-4 convention and OQ-H18 |
+| C-18 | Under proposal A, structural conditions without a resolution operation persist until governance. With a global SR, one such condition locks the account. This sharpens C-8 and C-14 | §8 A-map | OQ-R1; FD-18; FD-20 |
+| C-19 | An impugned original basis invalidates a reservation even when a later reactivation basis is intact. Conservative, possible over-denial | §7.2 reactivation | review; it could be relaxed only with an argument about the unexposed interval |
+| C-20 | Integrity alerts (R_PROPOSAL_CONFLICT, CONSUME_IDENTITY_CONFLICT) are excluded from SR. This is safe only if every effect on the broker side is caught as an unknown order (E20). That detection depends on A-12″ and adapter behaviour (G-07) | §7.1, §8 | G-07; adapter acceptance R-16 |
 
 ### 13.2 Missing dependencies
 
@@ -698,6 +786,7 @@ A snapshot of a non-bootstrap epoch is compared, never adopted (P-3).
 | Clarification vectors | V68 to V73 (A-1, B-1, D-1, the A-1 absence variant, C-2, the naive-adopt negative) | R4 CA-9 | hand-derived |
 | E/F/G vectors | V74 to V83 | R5 | hand-derived |
 | H vectors | V84 to V94 | R6 | hand-derived |
+| Draft-4 vectors | V114 every A-map row → SR false while open; resolution recorded in L3 → SR true; no timeout closes a row; V115 PENDING closes only through HISTORY FILL (CX-65); V116 reactivation with an impugned original basis → stays SUSPENDED → INVALIDATED; V117 reactivation with an expired TTL → refused; V118 consume with an intervening event → Π re-evaluated, no revision-equality failure (CX-68); V119 a duplicate consume with the same submission identity → idempotent; a different one → refused, alert, SR unchanged; V120 enumerated value out of range → malformed, no bind; V121 a reason-code serializer fault → that call DENY, no persistent condition (CX-67); V122 a clean ledger carries NONE | draft-3 clarifications | specified; **not executed** |
 | Draft-3 vectors | V104 status truth table including every SR clause, empty X(β) and no-watermark quiescent; V105 an ORDER_CONTRADICTION on an otherwise d = 0 ledger → UNKNOWN (STRUCTURAL), never RECONCILED (CX-57); V106 buy with U = 140, L = 150, Q = 30 → DENY at commit (CX-58); V107 sell with A_raw = 40, Q = 50 → DENY (CX-58); V108 consume interleaved with an evaluation: no revision with R counted 0 or 2 times (CX-59); V109 expiry racing consume → exactly one wins; V110 a bust keyed ≤ H_c arriving between the frontier and C is impossible by fold discipline, and arriving after C triggers the retro-relevance test (CX-60); V111 distinct exec_ids "a1B" and "A1b" → distinct τ (CX-61); V112 the CX-62 chain → H_Δ contains 130 and 70; V113 under A-11-ORD, every admissible cut sum lies in H_Δ | draft-2 review | specified; **not executed** |
 | Integration vectors (draft 2) | V95 status truth table (every combination → one row; rows 4 and 5 reachable); V96 τ_D: one transition via a keyless list and a keyed stream → one τ, key attached (CX-54); V97 KEY_MISMATCH; V98 broker versions 0, 2, 5 → no gap (CX-55); V99 A-11-ORD violation between keyed versions → ORDER_CONTRADICTION; V100 two concurrent commits on one revision → at most one reservation, the other re-evaluates; V101 duplicate proposal_id with a different hash → R_PROPOSAL_CONFLICT; V102 new-epoch events applied, status UNKNOWN until an e* snapshot; V103 evidence received at the tick time precedes the FINAL tick (IC-4, provisional) | integration review | specified; **not executed** |
 | Rule acceptance tests | AM-1 to AM-9 (R7 §12); AM-10 to AM-16 (R8); AM-11′, AM-13′, AM-14′, AM-15′, AM-16′, AM-17 (R9) | R7–R9 | specified; not executed |
@@ -760,6 +849,10 @@ A snapshot of a non-bootstrap epoch is compared, never adopted (P-3).
 | **CX-60** | draft-2 review | p_b = p_C with a receive path that appends without folding. A bust keyed ≤ H_c is appended after the evaluated frontier but before C. It lies inside the prefix, so it is never "received after p_b" and never triggers the retro-relevance test. The basis stays INTACT although the decision never saw the bust: a missed BASIS_IMPUGNED. Corrected (fold discipline; p_b = p_C − 1 = f(ρ)) |
 | **CX-61** | draft-2 review | exec_ids "a1B" and "A1b" are distinct at the broker and fill 5 each. Case folding gives the same τ, so the second is a duplicate and F_d undercounts a buy by 5: **false permission** at the margin. Corrected (no non-injective normalization) |
 | **CX-62** | draft-2 review | chain v0 fill 100 (κ ≤ W), v1 correct 100 → 40 (δ = −60, ⊥, list only), v2 correct 40 → 70 (δ = +30, κ ≤ W). Without A-11-ORD, v1 may have been emitted after W. The stream-prefix truth at W is then 100 + 30 = 130. The chain-state hull {0, 100, 40, 70} has maximum 100 and excludes 130, so the bound is **unsound**. H_Δ = [100 + 30 − 60, 100 + 30] = [70, 130] contains both 130 and 70. Corrected (H_Δ; the draft-2 soundness claim withdrawn) |
+| **CX-65** | draft-3 clarifications | proposal A unamended: a list delivers v2 before the stream delivers v1, giving routine PENDING. "Evidence alone does not close it", so the later arrival of v1 cannot close PENDING without an unnamed operation, and the account locks permanently on ordinary out-of-order arrival. Availability defect. Amended |
+| **CX-66** | draft-3 clarifications | proposal B clause 5: with "a separately authorized replacement basis" and no definition of who authorizes it, any process that asserts a replacement could reactivate a reservation whose basis was impugned, and reach consume. A potential **false-permission path** through undefined authority. Not adopted |
+| **CX-67** | draft-3 clarifications | proposal E unamended: a transient reason-code serialization fault is "a structural failure". Under proposal A it has no resolution operation, so the account is locked until founder re-bootstrap. Availability and governance defect. Amended (per-call evaluation fault) |
+| **CX-68** | draft-3 clarifications | proposal C "verifies the relevant revision". (a) Read as equality with the commit revision, any applied event between commit and consume makes every consume fail (liveness). (b) Read as the revision of an evaluation performed outside the lock, consume acts on a stale evaluation, a time-of-check / time-of-use gap and a **false-permission** risk. Amended (Π on the current revision, inside the lock) |
 | **CX-56** | integration review | FD-1′ declined while R-02′ was marked operative: the vectors assume FIXTURE_PASS, yet the literal §2.8 denies everything. A specification contradiction. Corrected by marking (IC-1); still blocking if FD-1′ is declined |
 
 ---
@@ -829,12 +922,17 @@ A snapshot of a non-bootstrap epoch is compared, never adopted (P-3).
 | P1-1 fold discipline; L1 operation records; basis in L1 commit record; p_b = p_C − 1 | draft-2 review | §2.2.A, §2.9 | DERIVED | OPERATIVE (basis completeness CONDITIONAL on OQ-H16) |
 | Additional 1: delta hull H_Δ; I13 amended; draft-2 hull withdrawn | draft-2 review | §2.2.E | DERIVED; relies on stream-prefix W1 (UNVERIFIED) | OPERATIVE-PROVISIONAL |
 | Additional 2: injective identifier encoding | draft-2 review | §2.2.B | DERIVED; hash collision resistance ASSUMED | OPERATIVE |
+| A: structural-state traceability, A-map, closure rule, SR completeness obligation (amended: evidence-driven resolution named) | draft-3 clarifications | §2.6.2 | DERIVED; map completeness not verified | OPERATIVE |
+| B: reactivation as a new authorization; suspension causes; TTL fixed; reactivation basis (amended: no replacement-basis path) | draft-3 clarifications | §2.9 | DERIVED | OPERATIVE |
+| C: consume linearization; submission identity; idempotency (amended: no revision binding; an alert, not structural) | draft-3 clarifications | §2.9 | DERIVED | OPERATIVE |
+| D: typed canonical encoding; enumerations; schema lineage | draft-3 clarifications | §2.2.B | DERIVED | OPERATIVE |
+| E: status envelope; explicit NONE; evaluation faults are per call (amended) | draft-3 clarifications | §2.6.2 | DERIVED; adapter side UNVERIFIED | OPERATIVE |
 
 ---
 
 ## 15. Readiness
 
-1. **Internally coherent?** As candidate text, subject to the seventeen conflicts in §13.1 (C-1 to C-17), of which two are known defects (OQ-H15, OQ-H19). **DERIVED.**
+1. **Internally coherent?** As candidate text, subject to the twenty conflicts in §13.1 (C-1 to C-20), of which two are known defects (OQ-H15, OQ-H19). **DERIVED.**
 2. **False-authorization paths inside the proposed contracts?** The draft-2 review exposed false-permission readings of the draft-2 text: CX-58 (pre-proposal Π), CX-59(b) (handoff gap) and CX-61 (identifier collapse); a latent one, CX-57 (table versus Rev 3.1 BOUNDED); a missed impugnment, CX-60; and an unsound hull, CX-62. All are corrected in draft 3. **No further path found in draft 3: DERIVED, not executed.** The fact that four rounds have each found new paths is itself evidence that hand review is not converging to verification. OQ-H15 currently *over*-reports impugnment, which is conservative.
 3. **Paths excluded only by environmental assumptions:**
    - CX-01 and C-1 (A-12″, A-15);
