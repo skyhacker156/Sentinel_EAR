@@ -1,0 +1,15 @@
+SL-PT-001 FD-6 v2 CUSTODY AND HARNESS-AUTHOR EXPOSURE RECORD
+Date: 2026-11-26
+Authored by GPT from R4.2i, its freeze record and GPT's own v1 artifacts only (exposure statements inside both files):
+  SL-PT-001_Interface_Contract_TER-1_v2.md  SHA-256 5e563068d6775dcd58f13c5dcf59944eb32552490efea9649bfdda934a9da319
+  sl_pt_001_audit_v2.py                     SHA-256 9ae6be409bc6cd9a85b5b987272c19f31e5fec947f6aaed9262fb662e187db65
+Committed before any TER or chain exists. v1 artifacts and the cleartext v1 seed (07f43e0) remain as history; superseded.
+EXPOSURE (disclosed by Claude): the auditor v2 SOURCE was shown to the harness author (Claude) on 2026-11-26.
+  Harness built BEFORE exposure: commit d7e2fd5 (Strike 1a and 1b): decide.py b5ce6e68..., validate.py 454e53ab..., exact.py d8d5da5c...
+  Harness work AFTER exposure (Strike 2 onward) is exposed. GPT's independence from the harness is unaffected.
+  Mitigations: (1) the pre-exposure baseline above is pinned; (2) Claude's observations of the auditor are sealed:
+  SL-PT-001_Claude_Sealed_Auditor_Observations_2026-11-26.txt SHA-256 3b3dd8e949dd8cf42be2dbfadf62c038ee3ab91ad2b3724820831ea3f730f687
+  (content withheld, held offline by the founder, revealed after the audited run); (3) harness changes after exposure must
+  cite R4.2i or contract v2 text, never auditor behaviour; (4) the founder hand cross-check is unchanged.
+Residual (founder to accept or reject): post-exposure harness code could unconsciously track the auditor's readings where
+R4.2i is silent. Agreement between harness and auditor on such points is weaker evidence than before.
