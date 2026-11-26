@@ -1,0 +1,15 @@
+SL-PT-001 Founder Decision Record v2
+Date: 2026-11-25
+Status: CONFIRMED BY FOUNDER
+Base: R4 candidate blob 38b1de639a7ecea842269f8f48a2638363cb4871; decision record v1 blob eb76d8a21521ad02e2c5530bf3bc30cafe583169 (unchanged, still in force)
+MISSION  Endpoint: one governed BUY with at least one confirmed fill, terminal order status, complete reservation/fill reconciliation (L-1 to L-3), independent reconstruction, and recorded remaining BTC exposure. Not a round trip; a governed EXIT is outside this milestone.
+FD-5  Clarified: "specification freeze" in FD-5 means the Stage A freeze: a committed record naming one R4 blob and its Stage A sections (2-7, 8.1, 10, 11, 13, Stage A tests in 14, Stage A rows of 15-16). Findings affecting only 8.2-8.6, 9, 12 or Stage B tests do not block FD-5; they must be resolved or accepted in writing at a Stage B freeze, which becomes a precondition of FD-9 together with the Stage A exit. A Stage B change touching any Stage A section requires a new Stage A freeze; earlier evidence stays tied to its old hash.
+RC-25a  R8 portfolio cap 300.00 USD: accepted.
+RC-25b  R12 450.00 USD: accepted, relabeled "buy gate, not a loss limit". It rejects new BUYs when equity (cash + BTC x bid) < 450.00 and can block the first BUY if reconciled pre-trade cash is below 450.00. The milestone loss bound is R7 (at most 150.00 USD reserved spend, spot, no leverage).
+RC-25c  Settle 60 s: accepted.
+RC-25d  Opening shadow cash 500.00 USD: accepted.
+R4-9  Stage A isolation: Branch C (client-level only) accepted, with the R4 2.3 limitation statement in every Stage A result. Host firewall not required for Stage A.
+R4-11  Stage A clock bound: |offset_estimate| <= 2 s accepted; otherwise BOUNDARY_FAIL.
+OI-13  FD-7 wrapper accepted as the "log" part of invoke + log only; it has no other logic.
+OI-09  Coverage gap: to be closed by the R4 Stage A review (Gemini account B reviews R4 sections 2, 13 and the claim limits), not by acceptance.
+Boundary: does not authorize any freeze, FD-5 harness build, Alpaca paper credentials, Stage B implementation, or any order.
