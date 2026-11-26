@@ -1,0 +1,6 @@
+SL-PT-001 Founder Decision Record v3
+Date: 2026-11-26
+Status: CONFIRMED BY FOUNDER
+Base: decision record v1 blob eb76d8a21521ad02e2c5530bf3bc30cafe583169 and v2 blob 801f7a57f5a87220a44f0bbc3e262e2704fdf77b (both unchanged, still in force); R4.2a blob e5e10cebf934b9bcd3007b36e86c5a8e8914d023
+OI-18  Confirmed: the R4.2a section 5.6 interval check (V12b conditions 1-4: Date present and parseable; t_recv >= t_send; t_recv - t_send < 3 s; theta_low >= -2 s and theta_high <= +2 s) implements R4-11 (Stage A clock bound of 2 s). It supersedes the point estimate "|offset_estimate| <= 2 s" named in v2; the 2 s bound itself is unchanged.
+Boundary: does not authorize any freeze, FD-5 harness build, Alpaca paper credentials, Stage B implementation, or any order.
