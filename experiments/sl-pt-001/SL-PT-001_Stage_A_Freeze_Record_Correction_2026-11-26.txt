@@ -1,0 +1,1 @@
+SL-PT-001 Stage A freeze record - correction note (2026-11-26): R4.2b was closure-checked by GPT only. Gemini B did not review R4.2b (a misrouted file); its R4.2c closure check covered all R4.2b changes and closed B4-01 to B4-03. Frozen blob and scope unchanged.
