@@ -1,0 +1,34 @@
+Narrow closure check of SL-PT-001 R4.2c, Stage A scope: finding G4-01 (issued request without a response) and the B4-03 condition (section 11.3 coverage of OFF_RUN). Full file: SL-PT-001_R4.2c_Stage_A_Review_Candidate_Claude_2026-11-26.md, SHA-256 9d417fb5b22147eec6785816b239ad6b76215ea5f18e662432dc7e9cfb283d76. R4.2c differs from R4.2b only in the text below (plus header and register status). Begin with your exposure statement.
+Classify G4-01 and B4-03 as CLOSED / CLOSED CONDITIONALLY / OPEN / INCORRECTLY CLOSED, citing the text below. Confirm the six previously reviewed terminal paths are unchanged in substance. New findings as G5-01, ... (section, mechanism, consequence, smallest correction, severity, blocks Stage A freeze yes/no). Verdict for the Stage A scope: FREEZE-READY / CONDITIONALLY FREEZE-READY / NOT FREEZE-READY. Judge only the text below.
+
+=== BEGIN R4.2c CHANGED TEXT (verbatim) ===
+§6.4 (cycle procedure), steps 2 to 4:
+2. **Fetch** bars, recording t_send and t_recv (§5.6). Store the raw artifacts (§10.2). **If the request ends without an HTTP response** (connection error, reset, or a client timeout if the harness sets one): NO_DECISION (FETCH_FAILED); V12b is NOT_EVALUATED (FETCH_FAILED); the quote is not fetched (U112).
+3. **Clock check (V12b)** on the bars response (§5.6). Failure → a BOUNDARY_FAIL CYCLE record; the quote is not fetched.
+4. **Fetch** the quote (§4.2). Store the raw artifacts. **If the quote request ends without an HTTP response,** the cycle continues: the quote is **absent**, which matters only if a proposal is to be constructed, and then the result is NO_DECISION (QUOTE_INVALID) under §4.11 (U113).
+
+**Unevaluated checks and absent artifacts (every field is always present; omission is invalid):**
+- each V1 to V11, V12a, V12b and Q1 to Q5 result is one of `PASS`, `FAIL` or `NOT_EVALUATED`. A `NOT_EVALUATED` result carries a reason: `V12A_FAILED`, `V12B_FAILED`, `FETCH_FAILED` (the bars request got no response), `DATA_INVALID` (a V1 to V11 failure), or `NO_PROPOSAL`;
+- an artifact hash, the clock fields (t_send, t_recv, D, θ_low, θ_high) and the computed values (S20, S50, D(k−1), D(k), signal, mapping, proposal) are JSON `null` when they do not exist;
+- **requests:** the TER has exactly two request objects, `bars_request` and `quote_request`, each `{url, sent_at, received_at, outcome}`. A request that was never issued is JSON `null` as a whole object. A request that was issued has `url` and `sent_at` as strings, and `outcome` ∈ {`RESPONSE`, `NO_RESPONSE`}. `received_at` is a string when `outcome` = `RESPONSE`, and `null` when `outcome` = `NO_RESPONSE` (issued, but no HTTP response received). A request with `NO_RESPONSE` has a `null` artifact hash;
+- **collections** (per-bar token tuples, excluded bars, bar-store transitions, rule results) are JSON arrays, **always present**. They are the empty array `[]` when there is nothing to record, including when the bars were never fetched or never parsed;
+- **scalars:** `null` is the only non-string **scalar** value permitted in a TER. Objects and arrays are structure, not numbers.
+
+| Terminal path | Present | `null` or `NOT_EVALUATED` |
+|---|---|---|
+| V12a fails | V12a = FAIL | `bars_request` and `quote_request` `null`; all artifacts and clock fields `null`; every other check NOT_EVALUATED (V12A_FAILED); computed values `null`; all collections `[]` |
+| bars request: no response | `bars_request` (`outcome` = NO_RESPONSE, `received_at` `null`); V12a = PASS | `quote_request` `null`; both artifacts and all clock fields except t_send `null` (t_recv `null`, so θ is not computed); V12b, V1 to V11 and Q1 to Q5 NOT_EVALUATED (FETCH_FAILED); computed values `null`; all collections `[]`. Terminal state NO_DECISION (FETCH_FAILED) |
+| V12b fails | `bars_request`; bars artifact; clock fields; V12a = PASS; V12b = FAIL | `quote_request` `null`; quote artifact `null`; V1 to V11 and Q1 to Q5 NOT_EVALUATED (V12B_FAILED); computed values `null`; all collections `[]` (the bars are stored but not parsed) |
+| a V1 to V11 failure | both requests and artifacts; V results per the §4.7 rule (evaluated, or NOT_EVALUATED (DATA_INVALID) after a V1 or V2 failure) | Q1 to Q5 NOT_EVALUATED (DATA_INVALID); computed values `null` |
+| HOLD or NO_ACTION | everything through the mapping | Q1 to Q5 NOT_EVALUATED (NO_PROPOSAL); proposal `null` |
+| QUOTE_INVALID | everything through the mapping; Q1 to Q5 **evaluated** (PASS/FAIL), at least one FAIL. If the quote request got no response, `quote_request.outcome` = NO_RESPONSE, the quote artifact is `null`, and Q1 to Q5 are FAIL (the quote is absent, §4.11) | proposal `null`; rule results `[]` |
+| a proposal (REJECTED, SHADOW_EXPIRED) | everything | — |
+
+§11.3, step 1:
+1. verifies the chain from GENESIS: contiguous `seq`, and every `prev_hash`, `hash` **and record schema, for every record of every type, including OFF_RUN**. Any failure is an integrity finding;
+
+| U108 | one TER per terminal path in §10.4's table (seven paths) | each validates against the closed schema, with exactly the stated `null` request objects, empty arrays and NOT_EVALUATED reasons | A |
+| U112 | the bars request ends with no HTTP response | TER per §10.4's "no response" row; NO_DECISION (FETCH_FAILED); slot non-qualifying | A |
+| U113 | the quote request ends with no HTTP response: (a) signal HOLD; (b) signal BUY, flat | (a) HOLD, `quote_request.outcome` = NO_RESPONSE; (b) NO_DECISION (QUOTE_INVALID), Q1 to Q5 FAIL | A |
+| U114 | an OFF_RUN record with an altered byte, or an unknown field | integrity finding from §11.3 step 1 | A |
+=== END R4.2c CHANGED TEXT ===

@@ -1,0 +1,97 @@
+Closure check of SL-PT-001 R4.2a (simulated-money paper-trading research specification; nothing executed). Full-file SHA-256 9fdb7555b3914ab755686ad4fe755bf6ac703a04069d79b821963c0e1e8ccacb. Start with your exposure statement (you reviewed R4.1 and did a closure check of R4.2 excerpts; you have not seen any other reviewer's review).
+Below are the R4.2a sections changed since your R4.2 closure check. For each of your R4.2 findings B3-01 to B3-05, classify CLOSED / CLOSED CONDITIONALLY / OPEN / INCORRECTLY CLOSED and cite the text. Note on B3-02: L is defined in section 7.2 of the full document (BUY: the checkpoint-(a) ask rounded down to price_increment; EXIT: the bid rounded up); section 8.1.1 now cross-references it.
+Then check the changed text itself: (1) is the V12b rule in 5.6 internally consistent with tests U79, U98, U106 and U107? (2) are the sizing vectors in U105 correct (recompute them exactly)? (3) does the TER table for unevaluated checks cover every terminal path, and is it consistent with the closed-schema rule? (4) is the 9-row precedence table in 11.2 complete and unambiguous? Use IDs B4-01, B4-02, ... for any new finding (section, mechanism, consequence, smallest correction, severity, blocks the Stage A freeze yes/no). End with a verdict: CLOSED / CLOSED WITH CONDITIONS / NOT CLOSED.
+Note: reviewer-attribution remarks have been removed from these excerpts for review isolation; the normative text is otherwise verbatim from the file whose SHA-256 is given above.
+
+=== BEGIN R4.2a EXCERPTS ===
+### 5.6 Clock source (R4-11)
+
+**Stage A:**
+- the harness **wall clock** (UTC epoch, integer ns). A monotonic clock is not used for t_send and t_recv, because θ compares epoch-anchored clocks;
+- each cycle records, for the bars request: **t_send** (harness wall-clock instant immediately before sending), **t_recv** (harness wall-clock instant at receipt of the response headers) and **D**, the HTTP `Date` header (whole seconds, truncated), converted exactly to integer ns;
+- **offset interval (DERIVED, under assumption A-CLK):** with θ = (data-host clock − harness clock),
+  - θ_low = D − t_recv;
+  - θ_high = D + 1 s − t_send;
+  - θ lies in the open interval (θ_low, θ_high);
+  - **assumption A-CLK (ASSUMED):** the server generated the `Date` header at some instant between t_send and t_recv on the harness clock. This excludes proxies or caches that rewrite or replay `Date`;
+- **check V12b (implements the accepted R4-11 bound of 2 s; §16 OI-18):** pass iff **all four** hold, otherwise BOUNDARY_FAIL:
+  1. `D` is present and parses (RFC 7231 IMF-fixdate);
+  2. t_recv ≥ t_send (a negative round trip means the wall clock stepped backwards: fail);
+  3. t_recv − t_send < 3 s (an explicit latency ceiling);
+  4. θ_low ≥ −2 s **and** θ_high ≤ +2 s.
+- Both offset bounds and the recorded instants go in the TER;
+- *Consequences (DERIVED):* a pass proves |θ| < 2 s under A-CLK and A-CLK2, because θ lies in the open interval (θ_low, θ_high) ⊆ [−2 s, +2 s]. The interval width is 1 s + (t_recv − t_send), so condition 4 alone would admit a round trip of up to and **including** 3 s; condition 3 excludes exactly 3 s.
+- **assumption A-CLK2 (ASSUMED):** the harness wall clock does not step during the bars request. Only a backward step larger than the round trip is detectable, by condition 2;
+- **what this does not give:** it bounds the harness clock against the **data host's** clock only. It does not establish the accuracy of either clock against UTC. Stage A timing claims are therefore **CONDITIONAL on the data host's clock being accurate** (UNVERIFIED; §15 U-T2).
+
+#### 8.1.1 Stage A sizing and shadow reservation (normative; Stage A freeze)
+
+| Symbol | Definition (exact; §5.1) |
+|---|---|
+| shadow_cash | the manifest's opening cash ($500.00). **It must be an exact multiple of $0.01**; otherwise the manifest is invalid. It never changes in Stage A |
+| L | the limit price, **as defined in §7.2**: the checkpoint-(a) ask rounded down to `price_increment` (BUY), or the bid rounded up (EXIT) |
+| shadow_reserved | the amount of the cycle's own shadow reservation, if any. It is 0 before step 3 of §7.1, because reservations never cross a slot (§8.1) |
+| cash_available | shadow_cash − shadow_reserved |
+| f_res | the policy file's reservation fee rate, 0.0025 (DOCUMENTED tier-1 taker; UNVERIFIED for paper). A reservation bound, not a booked fee |
+| budget | min($150.00, cash_available) |
+| q | floor to `qty_increment` of budget / (L × (1 + f_res)) |
+| R | ceil to the cent of q × L × (1 + f_res) |
+| shadow_reserved_btc | 0 before step 3 of §7.1. Set to q_exit when an EXIT proposal passes every rule at checkpoint (a); released at SHADOW_EXPIRED in the same cycle |
+| q_exit | floor to `qty_increment` of (shadow BTC − shadow_reserved_btc). Shadow BTC is always 0 on live data, so EXIT proposals arise only from fixtures (§3.3) |
+
+**Rules:**
+- R6, R7 and R10 (§7.3) are evaluated against these values. **R ≤ budget ≤ $150.00 holds by construction** (DERIVED, given L > 0, f_res ≥ 0 and shadow_cash on the cent grid: q × L × (1 + f_res) ≤ budget, and budget is on the cent grid), but R7 is still evaluated and recorded.
+- q < `min_order_size` → REJECTED (R10).
+- **Shadow reservation:** created with amount R, only if every rule passes at checkpoint (a). Released at SHADOW_EXPIRED in the same cycle.
+- **Increment values:** `qty_increment`, `price_increment` and `min_order_size` come from the policy file with `source: support_table_DOCUMENTED`, `status: UNVERIFIED` (§4.12). All Stage A sizing results are **CONDITIONAL** on them.
+- The Stage B ledger (§8.2) reuses the formulas for q and R, with its reconciled cash_available in place of the shadow value.
+
+**Unevaluated checks and absent artifacts (every field is always present; omission is invalid):**
+- each V1 to V11, V12a, V12b and Q1 to Q5 result is one of `PASS`, `FAIL` or `NOT_EVALUATED`. A `NOT_EVALUATED` result carries a reason: `V12A_FAILED`, `V12B_FAILED`, `DATA_INVALID` (a V1 to V11 failure), or `NO_PROPOSAL`;
+- an artifact hash, the clock fields (t_send, t_recv, D, θ_low, θ_high) and the computed values (S20, S50, D(k−1), D(k), signal, mapping, proposal) are JSON `null` when they do not exist. `null` is the **only** non-string value permitted in a TER.
+
+| Terminal path | Present | `null` or `NOT_EVALUATED` |
+|---|---|---|
+| V12a fails | V12a = FAIL | all artifacts and clock fields `null`; every other check NOT_EVALUATED (V12A_FAILED); computed values `null` |
+| V12b fails | bars artifact; clock fields; V12a = PASS; V12b = FAIL | quote artifact `null`; V1 to V11 and Q1 to Q5 NOT_EVALUATED (V12B_FAILED); computed values `null` |
+| a V1 to V11 failure | both artifacts; V results as evaluated | Q1 to Q5 NOT_EVALUATED (DATA_INVALID); computed values `null` |
+| HOLD or NO_ACTION | all V; computed values up to the mapping | Q1 to Q5 NOT_EVALUATED (NO_PROPOSAL); proposal `null` |
+| a proposal (REJECTED, SHADOW_EXPIRED) or QUOTE_INVALID | everything evaluated | proposal `null` if QUOTE_INVALID |
+
+### 11.2 Slot classification
+
+The auditor runs this per manifest and per slot i = 0 … N − 1, once now ≥ T_d(N):
+
+Rows are applied **in this order of precedence**; the first matching row decides.
+
+| # | Evidence for slot i | Classification |
+|---|---|---|
+| 1 | any chain record for slot i (CYCLE, CYCLE_OVERRUN or CONCURRENT_INVOCATION) fails the schema or the hash-chain check | **NON-QUALIFYING** (integrity finding) |
+| 2 | a CYCLE_OVERRUN record **and** one or more CYCLE records for slot i | **CONFLICT** (non-qualifying; a finding) |
+| 3 | a CYCLE_OVERRUN record and no CYCLE record | **OVERRUN** (non-qualifying) |
+| 4 | no CYCLE record, and an invocation-log line for slot i | **INCOMPLETE** (non-qualifying; orphaned artifacts listed, §10.2) |
+| 5 | no CYCLE record, and no invocation-log line | **MISSING** (non-qualifying) |
+| 6 | more than one CYCLE record | **DUPLICATE** (non-qualifying) |
+| 7 | exactly one CYCLE record and a CONCURRENT_INVOCATION anomaly | **NON-QUALIFYING** (a scheduler fault) |
+| 8 | exactly one CYCLE record whose artifact hashes or recomputation fail | **NON-QUALIFYING** (a finding) |
+| 9 | exactly one valid CYCLE record meeting §11.1 | **QUALIFYING** |
+
+**Findings that never qualify:**
+- **OFF_GRID:** a CYCLE record matching no slot of its manifest;
+- an INJECTION presented as SCHEDULED (U68);
+- the same cycle_id appearing under two manifests (U69).
+
+**Invocation consistency (U77):**
+- each invocation-log line must correspond to a chain record for its slot (a CYCLE, CONCURRENT_INVOCATION, CYCLE_OVERRUN or OFF_RUN record). **An invocation line whose slot is classified INCOMPLETE is reported once, under INCOMPLETE, not as a separate mismatch;**
+- each CYCLE record must correspond to an invocation line;
+- any mismatch is a finding.
+
+| U79 | with t_recv − t_send = 1 s: θ_high = +2 s exactly / + 1 ns; θ_low = −2 s exactly / − 1 ns (§5.6) | pass / BOUNDARY_FAIL | A |
+| U98 | an interval centred on 0 with round trip 3 s − 1 ns / exactly 3 s / 3 s + 1 ns | pass / BOUNDARY_FAIL (condition 3) / BOUNDARY_FAIL | A |
+| U105 | sizing vectors, with qty_increment 0.0001, f_res 0.0025 and price_increment 1 (the Stage A policy values): (a) L 59850, budget 150.00 → q 0.0025, R 150.00 (exact cost 149.9990625; the cent ceiling rounds up); (b) L 59850, budget 149.99 → q 0.0024, R 144.00 (the budget step changes q); (c) ask 60663.76 → L 60663, budget 150.00 → q 0.0024, R 145.96 (the floor changes q; cost 145.955178); (d) L 100000, budget 150.00 → q 0.0014, R 140.35 (exact, no rounding) | exactly these values (COMPUTED by Claude with exact rationals) | A |
+| U106 | t_recv < t_send | BOUNDARY_FAIL (condition 2) | A |
+| U107 | `Date` absent; `Date` unparseable | BOUNDARY_FAIL (condition 1), both cases | A |
+| U108 | one TER per terminal path in §10.4's table | each validates against the closed schema, with the stated `null` and NOT_EVALUATED values | A |
+| U109 | (a) a malformed CYCLE_OVERRUN record; (b) a CYCLE record and a CYCLE_OVERRUN record for the same slot | (a) integrity finding, row 1; (b) CONFLICT, row 2 | A |
+| U110 | an EXIT fixture: shadow BTC 0.0030, passing proposal | shadow_reserved_btc = q_exit until SHADOW_EXPIRED, then 0 | A |
+=== END R4.2a EXCERPTS ===

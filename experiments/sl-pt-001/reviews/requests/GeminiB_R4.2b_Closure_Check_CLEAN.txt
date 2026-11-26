@@ -1,0 +1,50 @@
+Closure check of SL-PT-001 R4.2b (simulated-money paper-trading research specification; nothing executed). Full-file SHA-256 5a8d4193e18a9c15458bbdde9a96515fcb64942b7e876e16f5372d01e0519ec0. Start with your exposure statement (you reviewed R4.1 and did closure checks of R4.2 and R4.2a excerpts; you have not seen any other reviewer's review).
+Below are the R4.2b sections changed since your R4.2a closure check. For each of your R4.2a findings B4-01 to B4-03, classify CLOSED / CLOSED CONDITIONALLY / OPEN / INCORRECTLY CLOSED and cite the text.
+Then check the changed text itself: (1) the V1-V11 evaluation and dependency rule against test U111; (2) the request objects, empty-array collections and the six-row terminal-path table against the closed-schema rule and test U108: is every path's TER fully determined? (3) the U98 endpoints: recompute theta_low, theta_high and the round trip for each case; (4) the section 11.2 table and the OFF_RUN note. Use IDs B5-01, B5-02, ... for any new finding (section, mechanism, consequence, smallest correction, severity, blocks the Stage A freeze yes/no). End with a verdict: CLOSED / CLOSED WITH CONDITIONS / NOT CLOSED.
+Note: reviewer-attribution remarks have been removed from these excerpts for review isolation; the normative text is otherwise verbatim from the file whose SHA-256 is given above.
+
+=== BEGIN R4.2b EXCERPTS ===
+- **V12a runs first, before any fetch.** Its failure → BOUNDARY_FAIL, and no fetch happens.
+- **V12b runs on the bars response, before any data from it is used.** Its failure → BOUNDARY_FAIL; the response is stored as an artifact but not validated or used.
+- V1 to V11 are then evaluated **in order, without short-circuiting**, and **all failures are recorded**, with one dependency rule: **if V1 or V2 fails, V3 to V11 are NOT_EVALUATED (DATA_INVALID)**, because the bar set they would examine is malformed or incomplete. Every check from V3 to V11 is evaluated whenever V1 and V2 pass, even if an earlier one of them fails (U111).
+
+**Unevaluated checks and absent artifacts (every field is always present; omission is invalid):**
+- each V1 to V11, V12a, V12b and Q1 to Q5 result is one of `PASS`, `FAIL` or `NOT_EVALUATED`. A `NOT_EVALUATED` result carries a reason: `V12A_FAILED`, `V12B_FAILED`, `DATA_INVALID` (a V1 to V11 failure), or `NO_PROPOSAL`;
+- an artifact hash, the clock fields (t_send, t_recv, D, θ_low, θ_high) and the computed values (S20, S50, D(k−1), D(k), signal, mapping, proposal) are JSON `null` when they do not exist;
+- **requests:** the TER has exactly two request objects, `bars_request` and `quote_request`, each `{url, sent_at, received_at}`. A request that was never issued is JSON `null` as a whole object. A request that was issued has all three members, as strings;
+- **collections** (per-bar token tuples, excluded bars, bar-store transitions, rule results) are JSON arrays, **always present**. They are the empty array `[]` when there is nothing to record, including when the bars were never fetched or never parsed;
+- **scalars:** `null` is the only non-string **scalar** value permitted in a TER. Objects and arrays are structure, not numbers.
+
+| Terminal path | Present | `null` or `NOT_EVALUATED` |
+|---|---|---|
+| V12a fails | V12a = FAIL | `bars_request` and `quote_request` `null`; all artifacts and clock fields `null`; every other check NOT_EVALUATED (V12A_FAILED); computed values `null`; all collections `[]` |
+| V12b fails | `bars_request`; bars artifact; clock fields; V12a = PASS; V12b = FAIL | `quote_request` `null`; quote artifact `null`; V1 to V11 and Q1 to Q5 NOT_EVALUATED (V12B_FAILED); computed values `null`; all collections `[]` (the bars are stored but not parsed) |
+| a V1 to V11 failure | both requests and artifacts; V results per the §4.7 rule (evaluated, or NOT_EVALUATED (DATA_INVALID) after a V1 or V2 failure) | Q1 to Q5 NOT_EVALUATED (DATA_INVALID); computed values `null` |
+| HOLD or NO_ACTION | everything through the mapping | Q1 to Q5 NOT_EVALUATED (NO_PROPOSAL); proposal `null` |
+| QUOTE_INVALID | everything through the mapping; Q1 to Q5 **evaluated** (PASS/FAIL), at least one FAIL | proposal `null`; rule results `[]` |
+| a proposal (REJECTED, SHADOW_EXPIRED) | everything | — |
+
+### 11.2 Slot classification
+
+The auditor runs this per manifest and per slot i = 0 … N − 1, once now ≥ T_d(N):
+
+Rows are applied **in this order of precedence**; the first matching row decides.
+
+| # | Evidence for slot i | Classification |
+|---|---|---|
+| 1 | any chain record for slot i (CYCLE, CYCLE_OVERRUN or CONCURRENT_INVOCATION) fails the schema or the hash-chain check | **NON-QUALIFYING** (integrity finding) |
+| 2 | a CYCLE_OVERRUN record **and** one or more CYCLE records for slot i | **CONFLICT** (non-qualifying; a finding) |
+| 3 | a CYCLE_OVERRUN record and no CYCLE record | **OVERRUN** (non-qualifying) |
+| 4 | no CYCLE record, and an invocation-log line for slot i | **INCOMPLETE** (non-qualifying; orphaned artifacts listed, §10.2) |
+| 5 | no CYCLE record, and no invocation-log line | **MISSING** (non-qualifying) |
+| 6 | more than one CYCLE record | **DUPLICATE** (non-qualifying) |
+| 7 | exactly one CYCLE record and a CONCURRENT_INVOCATION anomaly | **NON-QUALIFYING** (a scheduler fault) |
+| 8 | exactly one CYCLE record whose artifact hashes or recomputation fail | **NON-QUALIFYING** (a finding) |
+| 9 | exactly one valid CYCLE record meeting §11.1 | **QUALIFYING** |
+
+*OFF_RUN records carry no slot index (§6.2: an off-run invocation belongs to no slot), so they never match a row. An integrity failure in an OFF_RUN record, or in any other record, is still reported by the chain verification in §11.3.*
+
+| U98 | relative to D = 0: t_send = −1 s with t_recv = 2 s − 1 ns (round trip 3 s − 1 ns; θ_high = +2 s, θ_low = −2 s + 1 ns) / t_recv = 2 s (exactly 3 s; θ_low = −2 s) / t_recv = 2 s + 1 ns | pass / BOUNDARY_FAIL (condition 3) / BOUNDARY_FAIL (conditions 3 and 4) | A |
+| U108 | one TER per terminal path in §10.4's table (six paths) | each validates against the closed schema, with exactly the stated `null` request objects, empty arrays and NOT_EVALUATED reasons | A |
+| U111 | (a) V1 fails; (b) V2 fails; (c) V7 fails with V1 and V2 passing | (a), (b): V3 to V11 NOT_EVALUATED (DATA_INVALID); (c): V3 to V11 all evaluated, V7 = FAIL | A |
+=== END R4.2b EXCERPTS ===
