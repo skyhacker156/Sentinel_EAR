@@ -79,5 +79,34 @@ class EvidenceModuleBoundary(unittest.TestCase):
                 self.assertNotIn(word, src, f"{fname} contains {word!r}")
 
 
+class ClientModuleBoundary(unittest.TestCase):
+    """Strike 4: market.py is the ONLY module with network imports (http.client, ssl); cli.py has none (§2.2)."""
+
+    def imports(self, fname):
+        with open(os.path.join(PKG, fname), encoding="utf-8") as fh:
+            src = fh.read()
+        mods = set()
+        for node in ast.walk(ast.parse(src)):
+            if isinstance(node, ast.Import):
+                mods |= {a.name.split(".")[0] for a in node.names}
+            elif isinstance(node, ast.ImportFrom):
+                mods.add((node.module or "").split(".")[0])
+        return src, mods
+
+    def test_market_and_cli(self):
+        net = {"socket", "ssl", "http", "urllib", "requests", "asyncio", "subprocess", "ctypes"}
+        src, mods = self.imports("market.py")
+        self.assertEqual(mods & net, {"http", "ssl"})
+        _, cmods = self.imports("cli.py")
+        self.assertFalse(cmods & net, f"cli.py imports {cmods & net}")
+        for fname in ("market.py", "cli.py", "wrapper.py"):
+            text, _ = self.imports(fname)
+            for word in ("/v2/orders", "paper-api", "api.alpaca.markets", "submit_order", "cancel_order",
+                         "/v2/account", "Authorization", "APCA-API"):
+                self.assertNotIn(word, text, f"{fname} contains {word!r}")
+        self.assertIn('HOST = "data.alpaca.markets"', src)
+        self.assertEqual(src.count("HTTPSConnection("), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

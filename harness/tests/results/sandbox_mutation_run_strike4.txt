@@ -1,0 +1,8 @@
+SL-PT-001 Strike 4 mutation check (sandbox, Linux, Python 3.12), 2026-11-26
+Method: each change applied in place to market.py, tests.test_market_cli + tests.test_purity run in a fresh process,
+original restored from a byte copy afterwards; full suite re-run green.
+  host/path allowlist refusal disabled (§2.2)                -> CAUGHT (6 failures)
+  Accept-Encoding: identity header removed (D-8)             -> CAUGHT
+  t_send taken after sending instead of before (§5.6)        -> CAUGHT
+  limit=1000 changed to limit=60 (§4.2, CC-05)               -> CAUGHT
+  t_recv shifted from the header-receipt instant (§5.6)      -> CAUGHT
