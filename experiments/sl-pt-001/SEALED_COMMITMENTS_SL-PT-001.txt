@@ -1,0 +1,3 @@
+SL-PT-001 sealed commitments (content withheld; hashes only)
+bbe76a1ac0fb1c9c708bb0d096a4da7db9d9a1e8f7e5c34fc341a451f6a006f5  R3 self-findings SF-1..3 (Claude, 2026-11-26T03:52:49Z; disclosed, RI-01)
+e0d0703ebb00d1ccd2652d2402ed35b27eab8d103a460e59d3aca85348d1ba8c  R3 annex S2 (Claude; exposed to GPT, RI-02; sealed from Gemini)
