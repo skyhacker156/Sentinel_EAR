@@ -1,0 +1,14 @@
+SL-PT-001 STAGE A SPECIFICATION FREEZE RECORD
+Date: 2026-11-26
+Status: FROZEN BY FOUNDER (Stage A scope only)
+Frozen document: experiments/sl-pt-001/SL-PT-001_R4.2c_Stage_A_Review_Candidate_Claude_2026-11-26.md
+  git blob 316d08c046dd7e1ea4a61be980c037b1c62037d5
+  SHA-256  9d417fb5b22147eec6785816b239ad6b76215ea5f18e662432dc7e9cfb283d76
+Frozen scope (decision record v2 FD-5 clarification): sections 2-7, 8.1 (including 8.1.1), 10, 11, 13; section 14 tests whose Stage column contains "A"; Stage A rows of sections 15-16. Sections 0, 1, 17 are records. Sections 8.2-8.6, 9, 12 and Stage B-only tests are STAGE B DRAFT and NOT frozen.
+Decision records in force: v1 eb76d8a21521ad02e2c5530bf3bc30cafe583169; v2 801f7a57f5a87220a44f0bbc3e262e2704fdf77b; v3 (OI-18).
+Review basis: R4.1 Stage A reviews (Gemini B, GPT); closure checks of R4.2, R4.2a, R4.2b, R4.2c (GPT and Gemini B); reconciliations committed under experiments/sl-pt-001. Final verdicts on R4.2c: GPT FREEZE-READY; Gemini B CLOSED.
+Editorial notes (non-normative; no change to frozen text): B5-01 t_send is recorded whenever the bars request is issued, including NO_RESPONSE. G5-01 a quote NO_RESPONSE does not change a HOLD or NO_ACTION mapping; QUOTE_INVALID applies only when a proposal would be constructed (as already stated in 6.4 step 4 and U113a).
+Accepted residuals (disclosed in the frozen text): A-CLK, A-CLK2 assumed; data-host clock accuracy vs UTC UNVERIFIED; Branch C client-level isolation only; credentials outside the checked scope not excluded; U-O2 and U-O4 UNBOUNDED; OI-08 to be accepted or not at Stage A exit; FD-6 common-mode risk with GPT dissent preserved.
+Stage B remains open: OI-10, OI-11, OI-12, OI-15, OI-17; FD-9 deferred.
+A change to any frozen section requires a new Stage A freeze record; evidence stays tied to this blob.
+Boundary: this record freezes the Stage A specification only. It does not by itself authorize the harness build (FD-5), credentials, trading-host connection, Stage B, or any order.
