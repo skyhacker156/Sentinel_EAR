@@ -8,7 +8,7 @@ import os
 import unittest
 
 PKG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sl_pt_001")
-MODULES = ["exact.py", "decide.py"]
+MODULES = ["exact.py", "decide.py", "validate.py"]
 FORBIDDEN_IMPORTS = {"decimal", "time", "datetime", "socket", "ssl", "http", "urllib", "requests",
                      "subprocess", "os", "random", "secrets", "ctypes", "asyncio"}
 FORBIDDEN_NAMES = {"float", "eval", "exec", "__import__", "open", "input"}
