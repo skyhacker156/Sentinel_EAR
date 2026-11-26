@@ -1,0 +1,8 @@
+SL-PT-001 Strike 2 mutation check (sandbox, Linux, Python 3.12.3), 2026-11-26
+Method: each mutation applied ON DISK to a scratch copy of harness/, full suite run in a fresh process, copy discarded;
+the real tree was compared byte-for-byte afterwards (cmp: identical).
+M1 read_chain record-hash comparison disabled ("if False:")  -> CAUGHT: test_U70_one_byte_altered_breaks_chain FAILED.
+M2 _no_numbers TER guard disabled ("elif False:")          -> NOT CAUGHT by the first suite (148/148 passed): the U88 cases
+   placed numbers in fields that have their own type checks. Finding: the general guard had no test of its own.
+   Fix: test_U88_numbers_only_the_general_guard_can_see (numbers / booleans inside V12a_evidence arrays).
+M2 re-run with the new test                                 -> CAUGHT: 3 subtests FAILED.

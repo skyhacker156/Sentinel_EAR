@@ -287,7 +287,8 @@ def run_cycle(v12a, bars_header, bars_body, t_send_ns, t_recv_ns, quote_header, 
     `bars_header`/`bars_body` are the D-8 artifacts, or None/None if the bars request got no HTTP response.
     `store` is the bar store (validate.fold), mutated only by an admitted response (D-6).
     Returns a dict with every check result, the signal path and the terminal state."""
-    out = {"V": {c: "NOT_EVALUATED" for c in V_ALL}, "V12a": None, "V12b": "NOT_EVALUATED",
+    out = {"V": {c: "NOT_EVALUATED" for c in V_ALL}, "V12a": None, "V12b": "NOT_EVALUATED", "bars_parsed": [],
+           "D": None, "theta_low": None, "theta_high": None, "displayed_sizes": None,
            "Q": {q: "NOT_EVALUATED" for q in ("Q1", "Q2", "Q3", "Q4", "Q5")}, "transitions": []}
     v12a_result = v12a if isinstance(v12a, str) else v12a[0]
     out["V12a"] = v12a_result
@@ -312,6 +313,8 @@ def run_cycle(v12a, bars_header, bars_body, t_send_ns, t_recv_ns, quote_header, 
     q = V.check_quote_response(quote_header, quote_body)               # step 4: quote fetched
     out["displayed_sizes"] = V.displayed_sizes(q["quote"], q["available"])     # G8-01 (fix F-2)
     b = V.check_bars_response(bars_header, bars_body)                  # step 5: V1 ... V11
+    if b["V1"] == "PASS":
+        out["bars_parsed"] = b["bars"]
     v1 = "PASS" if b["V1"] == "PASS" and q["V1_quote"] == "PASS" else "FAIL"
     out["V"]["V1"], out["V"]["V2"] = v1, b["V2"]
     if v1 == "FAIL" or b["V2"] != "PASS":
@@ -323,6 +326,7 @@ def run_cycle(v12a, bars_header, bars_body, t_send_ns, t_recv_ns, quote_header, 
         out["terminal"] = f"NO_DECISION ({sub})"
         return out
     val = V.validate_bars(b["bars"], T_d_ns)
+    out["bars_parsed"] = b["bars"]                                     # arrival order, for TER partitions (§10.4)
     if V.admitted(b, val):
         out["transitions"] = V.fold(store, val, V.request_start_ns(T_d_ns), T_d_ns)
     v11 = V.check_V11(store, T_d_ns)
