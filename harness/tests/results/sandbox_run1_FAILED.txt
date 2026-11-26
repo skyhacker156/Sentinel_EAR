@@ -1,0 +1,71 @@
+RUN 1 (sandbox, Linux, Python 3.12.3), before test corrections
+test_EC3_EC4 (test_decide.Crossover.test_EC3_EC4) ... ok
+test_FD2_exhaustive_and_exclusive_on_sign_grid (test_decide.Crossover.test_FD2_exhaustive_and_exclusive_on_sign_grid) ... ok
+test_U1_minus4_to_minus1_hold (test_decide.Crossover.test_U1_minus4_to_minus1_hold) ... ok
+test_U2_minus3_to_plus2_buy (test_decide.Crossover.test_U2_minus3_to_plus2_buy) ... ok
+test_U3_plus3_to_minus2_exit (test_decide.Crossover.test_U3_plus3_to_minus2_exit) ... ok
+test_U4a_minus1_to_0_hold (test_decide.Crossover.test_U4a_minus1_to_0_hold) ... ok
+test_U4b_0_to_plus1_buy (test_decide.Crossover.test_U4b_0_to_plus1_buy) ... ok
+test_U4c_plus1_0_plus1_buy_at_third_step (test_decide.Crossover.test_U4c_plus1_0_plus1_buy_at_third_step) ... ok
+test_U4d_minus1_0_minus1_exit_at_third_step (test_decide.Crossover.test_U4d_minus1_0_minus1_exit_at_third_step) ... ok
+test_U10_identical_across_runs_processes_locale_timezone (test_decide.Determinism.test_U10_identical_across_runs_processes_locale_timezone) ... ok
+test_EXACT_end_to_end_signals (test_decide.Indicators.test_EXACT_end_to_end_signals) ... ok
+test_EXACT_indicator_values (test_decide.Indicators.test_EXACT_indicator_values) ... ok
+test_U11_history_precondition (test_decide.Indicators.test_U11_history_precondition) ... ok
+test_U18_quote_independence (test_decide.Indicators.test_U18_quote_independence) ... ok
+test_U4e_exact_equality_where_binary_arithmetic_differs (test_decide.Indicators.test_U4e_exact_equality_where_binary_arithmetic_differs) ... FAIL
+test_EXACT_mapping_table (test_decide.Mapping.test_EXACT_mapping_table) ... ok
+test_U14_flat_boundary (test_decide.Mapping.test_U14_flat_boundary) ... ok
+test_U17_bar_past_settle_is_excluded (test_exact.CompletedCandles.test_U17_bar_past_settle_is_excluded) ... ok
+test_U5_late_invocation_keeps_slot_and_rule (test_exact.CompletedCandles.test_U5_late_invocation_keeps_slot_and_rule) ... ok
+test_U78_boundary_inclusive_then_one_ns_earlier (test_exact.CompletedCandles.test_U78_boundary_inclusive_then_one_ns_earlier) ... ok
+test_U89_end_labelled_bars_never_used_before_close (test_exact.CompletedCandles.test_U89_end_labelled_bars_never_used_before_close) ... ok
+test_TIME_rfc3339_exact (test_exact.Instants.test_TIME_rfc3339_exact) ... ok
+test_TIME_rfc3339_malformed (test_exact.Instants.test_TIME_rfc3339_malformed) ... ok
+test_EXACT_valid_tokens (test_exact.NumberTokens.test_EXACT_valid_tokens) ... ok
+test_U24_zero_volume_by_exact_value (test_exact.NumberTokens.test_U24_zero_volume_by_exact_value) ... ok
+test_U25_exact_sums_where_binary_sums_differ (test_exact.NumberTokens.test_U25_exact_sums_where_binary_sums_differ) ... ok
+test_U87_long_mantissa_and_extreme_exponents_are_exact (test_exact.NumberTokens.test_U87_long_mantissa_and_extreme_exponents_are_exact) ... FAIL
+test_U87_malformed_tokens (test_exact.NumberTokens.test_U87_malformed_tokens) ... ok
+test_EXACT_ceil_cent (test_exact.RoundingPoints.test_EXACT_ceil_cent) ... ok
+test_EXACT_decimal_string_refuses_non_terminating (test_exact.RoundingPoints.test_EXACT_decimal_string_refuses_non_terminating) ... ok
+test_EXACT_display_8dp_round_half_even (test_exact.RoundingPoints.test_EXACT_display_8dp_round_half_even) ... ok
+test_EXACT_floor_q_to_quantity_increment (test_exact.RoundingPoints.test_EXACT_floor_q_to_quantity_increment) ... ok
+test_EXACT_limit_conservative_rounding (test_exact.RoundingPoints.test_EXACT_limit_conservative_rounding) ... ok
+test_TIME_off_run_and_grid (test_exact.SlotIdentity.test_TIME_off_run_and_grid) ... ok
+test_U52_invocation_exactly_at_next_T_d (test_exact.SlotIdentity.test_U52_invocation_exactly_at_next_T_d) ... ok
+test_U53_cutoff_boundaries (test_exact.SlotIdentity.test_U53_cutoff_boundaries) ... ok
+test_U53_property_slot_anchored_clocks (test_exact.SlotIdentity.test_U53_property_slot_anchored_clocks) ... ok
+test_U87_no_float_literal_or_call (test_purity.Purity.test_U87_no_float_literal_or_call) ... ok
+test_U87_no_true_division_by_or_of_an_int_literal (test_purity.Purity.test_U87_no_true_division_by_or_of_an_int_literal) ... ok
+test_X10_no_order_vocabulary_in_package (test_purity.Purity.test_X10_no_order_vocabulary_in_package) ... ok
+test_boundary_no_forbidden_imports (test_purity.Purity.test_boundary_no_forbidden_imports) ... ok
+
+======================================================================
+FAIL: test_U4e_exact_equality_where_binary_arithmetic_differs (test_decide.Indicators.test_U4e_exact_equality_where_binary_arithmetic_differs)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/claude/hb/harness/tests/test_decide.py", line 89, in test_U4e_exact_equality_where_binary_arithmetic_differs
+    self.assertNotEqual(5 * fs20 - 2 * fs50, 0.0)
+AssertionError: 0.0 == 0.0
+
+======================================================================
+FAIL: test_U87_long_mantissa_and_extreme_exponents_are_exact (test_exact.NumberTokens.test_U87_long_mantissa_and_extreme_exponents_are_exact)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/claude/hb/harness/tests/test_exact.py", line 39, in test_U87_long_mantissa_and_extreme_exponents_are_exact
+    self.assertEqual(X.to_decimal_string(X.parse_number_token(long)), long)
+AssertionError: '123456789012345678901234567890.12345678901234567890123456789' != '123456789012345678901234567890.123456789012345678901234567890'
+- 123456789012345678901234567890.12345678901234567890123456789
++ 123456789012345678901234567890.123456789012345678901234567890
+?                                                             +
+
+
+----------------------------------------------------------------------
+Ran 41 tests in 0.260s
+
+FAILED (failures=2)
+
+[U10] cross-process digest: a7a178f2cea94a004852798f2e5c03fe7cf410f1c1adf005d1eb6a1d1701e19a
+
+[U53] property seed recorded: 20261126
