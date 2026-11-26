@@ -310,7 +310,7 @@ def run_cycle(v12a, bars_header, bars_body, t_send_ns, t_recv_ns, quote_header, 
         out["terminal"] = "BOUNDARY_FAIL"
         return out
     q = V.check_quote_response(quote_header, quote_body)               # step 4: quote fetched
-    out["displayed_sizes"] = V.displayed_sizes(q["quote"])
+    out["displayed_sizes"] = V.displayed_sizes(q["quote"], q["available"])     # G8-01 (fix F-2)
     b = V.check_bars_response(bars_header, bars_body)                  # step 5: V1 ... V11
     v1 = "PASS" if b["V1"] == "PASS" and q["V1_quote"] == "PASS" else "FAIL"
     out["V"]["V1"], out["V"]["V2"] = v1, b["V2"]

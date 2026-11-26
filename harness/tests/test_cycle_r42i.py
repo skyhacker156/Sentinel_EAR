@@ -276,6 +276,32 @@ class DisplayedSizes(unittest.TestCase):
         self.assertEqual(set(out["Q"].values()), {"NOT_EVALUATED"})
 
 
+class SpecFixesF1F2(unittest.TestCase):
+    """Fixes F-1 and F-2 (2026-11-26), each asserting R4.2i text: §4.3 D-8 and §10.4 G8-01."""
+
+    def test_F1_quote_non_identity_content_encoding_fails_V1(self):
+        out = cycle(qh=hdr(extra=[("Content-Encoding", "gzip")]))
+        self.assertEqual(out["V"]["V1"], "FAIL")
+        self.assertEqual(out["terminal"], "NO_DECISION (FETCH_FAILED)")
+        self.assertEqual(out["V"]["V3"], "NOT_EVALUATED")
+
+    def test_F2_unusable_but_received_quote_gives_null_members(self):
+        for kw in (dict(qh=hdr(status=500)), dict(qb=b"{not json"), dict(qb=b'{"quotes":[]}'),
+                   dict(qh=b"garbage")):
+            with self.subTest(kw=list(kw)):
+                out = cycle(last="0", **kw)
+                self.assertEqual(out["displayed_sizes"], {"bs": None, "as": None})
+                self.assertEqual(out["terminal"], "HOLD")
+
+    def test_F2_unusable_quote_on_BUY_is_QUOTE_INVALID(self):
+        out = cycle(last="5", qh=hdr(status=500))
+        self.assertEqual(out["terminal"], "NO_DECISION (QUOTE_INVALID)")
+        self.assertEqual(set(out["Q"].values()), {"FAIL"})
+
+    def test_F2_no_response_still_null_object(self):
+        self.assertIsNone(cycle(last="0", qh=None, qb=None)["displayed_sizes"])
+
+
 class FullCycle(unittest.TestCase):
     def test_full_BUY_SHADOW_EXPIRED_from_raw_artifacts(self):
         out = cycle(last="5")

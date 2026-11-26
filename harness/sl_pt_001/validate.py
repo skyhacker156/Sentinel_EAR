@@ -316,40 +316,54 @@ def check_bars_response(header_raw, body_raw):
 
 
 def check_quote_response(header_raw, body_raw):
-    """The quote response (§4.11; U95; U113). Follows contract v1 CONTRACT CHOICE (re-check at v2):
-    - a quote response that parses and is keyed by any symbol other than exactly BTC/USD fails V1 (FETCH_FAILED);
-    - no response (both None), a non-200 status, a bad encoding or malformed JSON leave the quote ABSENT,
-      which matters only if a proposal is to be built (Q1-Q5 all FAIL, §4.11);
-    - the quote object's values are passed on as token text or NonNumeric markers for Q1-Q5."""
+    """The quote response (§4.11; U95; U113; §4.3 D-8; §10.4 G8-01).
+    - no response (both None): the quote is absent and no response is available; V1 is not failed (U113);
+    - a Content-Encoding other than identity fails V1 (§4.3 D-8: "a response with any Content-Encoding other than
+      identity fails V1"). [Fix F-1, 2026-11-26: the earlier code treated this as an absent quote.]
+    - a quote that parses and is keyed by any symbol other than exactly BTC/USD fails V1 (U95);
+    - a non-200 status, an unparseable header artifact or malformed JSON leave the quote ABSENT (Q1-Q5 all FAIL if a
+      proposal is built, §4.11), but a response WAS received, so displayed sizes are {bs: null, as: null}
+      (§10.4 G8-01: the object is null only when no quote is available). [Fix F-2, 2026-11-26.]
+    Both fixes cite R4.2i text; they were found while checking the harness against contract v2 and the spec."""
     if header_raw is None and body_raw is None:
-        return {"V1_quote": "PASS", "quote": None}                    # NO_RESPONSE does not fail V1 (U113)
+        return {"V1_quote": "PASS", "quote": None, "available": False}
+    absent = {"V1_quote": "PASS", "quote": None, "available": True}
     try:
         status, fields = parse_header_artifact(header_raw)
-        enc = header_value(fields, "Content-Encoding")
-        if status != 200 or (enc is not None and enc.strip().lower() != "identity"):
-            return {"V1_quote": "PASS", "quote": None}
+    except (ValueError, TypeError, AttributeError):
+        return absent
+    enc = header_value(fields, "Content-Encoding")
+    if enc is not None and enc.strip().lower() != "identity":
+        return {"V1_quote": "FAIL", "quote": None, "available": True}          # F-1 (D-8)
+    if status != 200:
+        return absent
+    try:
         doc = parse_json_tokens(body_raw)
     except (ValueError, TypeError, AttributeError):
-        return {"V1_quote": "PASS", "quote": None}
+        return absent
     quotes = doc.get("quotes") if isinstance(doc, dict) else None
     if not isinstance(quotes, dict):
-        return {"V1_quote": "PASS", "quote": None}
+        return absent
     if set(quotes) != {SYMBOL}:
-        return {"V1_quote": "FAIL", "quote": None}                    # U95
+        return {"V1_quote": "FAIL", "quote": None, "available": True}          # U95
     q = quotes[SYMBOL]
     if not isinstance(q, dict):
-        return {"V1_quote": "PASS", "quote": None}
+        return absent
     row = {k: _numeric_or_marker(q[k]) for k in ("bp", "ap", "bs", "as") if k in q}
     if "t" in q:
         row["t"] = q["t"] if isinstance(q["t"], str) and not isinstance(q["t"], NumTok) else NonNumeric(q["t"])
-    return {"V1_quote": "PASS", "quote": row}
+    return {"V1_quote": "PASS", "quote": row, "available": True}
 
 
-def displayed_sizes(quote):
+def displayed_sizes(quote, available=None):
     """§10.4 G8-01: {bs, as}, each the token text when the key holds a JSON number token, else None.
-    None as a whole only when no quote is available."""
-    if quote is None:
+    None as a whole ONLY when no quote is available (request never issued, NO_RESPONSE, injected V12a FAIL).
+    `available` defaults to (quote is not None); pass it explicitly when a response arrived but was unusable (F-2)."""
+    if available is None:
+        available = quote is not None
+    if not available:
         return None
+    quote = quote or {}
     return {k: (quote[k] if isinstance(quote.get(k), str) else None) for k in ("bs", "as")}
 
 

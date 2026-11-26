@@ -1,0 +1,10 @@
+SL-PT-001 Founder Decision Record v5
+Date: 2026-11-26
+Status: CONFIRMED BY FOUNDER
+Decision: OPTION A. The harness-author exposure to auditor v2 source (recorded in SL-PT-001_FD-6_v2_Custody_and_Exposure_Record_2026-11-26.txt) is ACCEPTED as a disclosed residual, with these mitigations in force:
+  (1) pre-exposure harness baseline pinned at commit d7e2fd5;
+  (2) Claude's observations of the auditor sealed (SHA-256 3b3dd8e949dd8cf42be2dbfadf62c038ee3ab91ad2b3724820831ea3f730f687), held offline by the founder, revealed after the audited run;
+  (3) every post-exposure harness change cites R4.2i or TER-1 contract v2 text, never auditor behaviour;
+  (4) the founder hand cross-check is unchanged; an independent Gemini B review of the auditor is optional.
+GPT is not to be shown harness code. Claude is not to be shown auditor source again.
+Boundary: authorizes nothing beyond FD-5 v2. No credentials, trading-host connection, Stage B or order.
