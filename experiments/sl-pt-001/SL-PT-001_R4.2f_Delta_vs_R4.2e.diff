@@ -1,0 +1,263 @@
+diff --git a/experiments/sl-pt-001/SL-PT-001_R4.2e_Stage_A_Amendment_Candidate_Claude_2026-11-26.md b/experiments/sl-pt-001/SL-PT-001_R4.2f_Stage_A_Amendment_Candidate_Claude_2026-11-26.md
+index 3328e47fc4abbe080d74266373e2eaed9605d403..0a736a5ca35b4a80618ca7689d5e1e4d9f8dbcf9 100644
+--- a/experiments/sl-pt-001/SL-PT-001_R4.2e_Stage_A_Amendment_Candidate_Claude_2026-11-26.md
++++ b/experiments/sl-pt-001/SL-PT-001_R4.2f_Stage_A_Amendment_Candidate_Claude_2026-11-26.md
+@@ -1,7 +1,7 @@
+-# SL-PT-001 R4.2e: Stage A amendment candidate (FD-6 reconciliation delta on frozen R4.2c, closure version)
++# SL-PT-001 R4.2f: Stage A amendment candidate (FD-6 reconciliation delta on frozen R4.2c, second closure version)
+ 
+ **Author:** Claude (Specification Lead / ARBITER). **Date:** 2026-11-26.
+-**R4.2e delta:** R4.2e = frozen R4.2c (blob `316d08c046dd7e1ea4a61be980c037b1c62037d5`, freeze record `030e7c0`) plus delta items D-1 to D-8 only, from `SL-PT-001_FD-6_Reconciliation_Claude_2026-11-26.md`, with the wording of D-2, D-3, D-4 and D-7 revised to meet founder closure conditions CL-01 to CL-04 (`SL-PT-001_R4.2e_Closure_Package_Claude_2026-11-26.md`). It supersedes candidate R4.2d (blob `b60327c673f19285813311b0ee343ac6596ed813`, never frozen). Every other line is byte-identical to R4.2c. Until a founder freeze record names R4.2e, **R4.2c remains the frozen Stage A specification.**
++**R4.2f delta:** R4.2f = frozen R4.2c (blob `316d08c046dd7e1ea4a61be980c037b1c62037d5`, freeze record `030e7c0`) plus delta items D-1 to D-8 only, from `SL-PT-001_FD-6_Reconciliation_Claude_2026-11-26.md`, with the wording of D-2, D-3, D-4 and D-7 revised to meet founder closure conditions CL-01 to CL-04, and of D-3 and D-4 revised again for GPT findings G6-01 to G6-06 and Gemini B's stale-pointer note (`SL-PT-001_R4.2f_Closure_Package_Claude_2026-11-26.md`). It supersedes candidates R4.2d (blob `b60327c673f19285813311b0ee343ac6596ed813`) and R4.2e (blob `3328e47fc4abbe080d74266373e2eaed9605d403`), neither frozen. Every other line is byte-identical to R4.2c, except the closing line and the §16 OI-16 row, which are updated records. Until a founder freeze record names R4.2f, **R4.2c remains the frozen Stage A specification.**
+ **Responds to:** GPT's R4.2b closure check (finding G4-01, and the B4-03 condition), 2026-11-26. R4.2b responded to the R4.2a closure checks (GPT G3-06, G3-07; Gemini B4-01 to B4-03). R4.2a responded to the R4.2 closure checks; R4.2 to the R4.1 reviews.
+ **Base:** R4.2b (blob `45cf85ef1df02f65c38ef3ef4ae592c61fb99018`), with one targeted correction (request transport failure) and one clarification (§11.3), listed in the R4.2b closure note. R4.2b was R4.2a (blob `e5e10cebf934b9bcd3007b36e86c5a8e8914d023`, founder-verified with `ls-tree`) corrected per the R4.2a closure reconciliation. R4.2a was R4.2 (blob `f87ad21f4c70f558335070b843cb270e026005d2`) corrected per the R4.2 closure reconciliation. R4.2 was R4.1 (blob `a653252a8b184f0e184c7f2b42b4dbba6ff49d3f`, commit `0a4ddaf…` as reported by the founder) corrected per the R4.1 review reconciliation. R4.1 was itself R4 (blob `38b1de639a7ecea842269f8f48a2638363cb4871`) synchronized with founder decision record v1 (blob `eb76d8a2…`) and **v2** (blob `801f7a57f5a87220a44f0bbc3e262e2704fdf77b`). Changes from R4 to R4.1 are listed in the R4.1 review packet; from R4.1 to R4.2 in the R4.1 review reconciliation; from R4.2 to R4.2a in the R4.2 closure reconciliation; from R4.2a to R4.2b in the R4.2a closure reconciliation.
+ **Classification:** design documentation only.
+@@ -12,7 +12,7 @@
+ **What R4 is:** one complete specification for SL-PT-001.
+ - It integrates R3 (blob `203b4bf5…`), the R3 review reconciliation (corrections R4-1 to R4-16), the founder decision record and the probe evidence.
+ - A reader needs no other SL-PT-001 document to follow the system.
+-- **R4.2e proposes to replace frozen R4.2c** (candidate R4.2d is superseded and was never frozen); R4.2c replaced R4.2b, which replaced R4.2a, which replaced R4.2, R4.1 and R4. All remain in the repository as history.
++- **R4.2f proposes to replace frozen R4.2c** (candidates R4.2d and R4.2e are superseded and were never frozen); R4.2c replaced R4.2b, which replaced R4.2a, which replaced R4.2, R4.1 and R4. All remain in the repository as history.
+ - Earlier documents are **history**, not specification.
+ - **G-07 Draft 0.3** (blob `1cdbd7d3…`) still defines the execution-boundary components and terms used in §9 (K3, K5, LP-CONSUME, LP-WAL, LP-PRESEND, invariants G7-I1 to I10). R4 changes G-07 only by the approval predicate A0.3-13, stated in full in §9.2.
+ 
+@@ -213,14 +213,14 @@ Missing history is a data failure (§4.7), never HOLD.
+ | bars | `symbols=BTC/USD`, `timeframe=5Min`, `start = t_exp − 59 × 300 s`, `end = T_d` (RFC-3339 UTC, second precision), `limit=1000` |
+ | quote | `latest/quotes?symbols=BTC/USD` |
+ 
+-- The exact meaning of `end` (inclusive or exclusive; whether it applies to bar start) is **UNVERIFIED**. The rules are written so any reading is handled: extra bars are excluded by §4.6, missing bars fail V7 or V8, and a non-null page token fails V2; Stage A never fetches a further page (R4.2e D-1).
++- The exact meaning of `end` (inclusive or exclusive; whether it applies to bar start) is **UNVERIFIED**. The rules are written so any reading is handled: extra bars are excluded by §4.6, missing bars fail V7 or V8, and a non-null page token fails V2; Stage A never fetches a further page (R4.2f D-1).
+ - The request URLs, send instants and receipt instants are recorded.
+ 
+ ### 4.3 Raw artifacts and exact values
+ 
+ 1. Raw response bytes and headers are stored **before** parsing, under their SHA-256 (artifact ownership: §10.2).
+    - **Body artifact:** the response body bytes after transfer decoding (chunked framing removed). Each request sends `Accept-Encoding: identity`; a response with any `Content-Encoding` other than `identity` fails V1 (FETCH_FAILED).
+-   - **Header artifact:** the status line and header fields **as reported by the HTTP client**, in received order and original case: `HTTP/<version> <status> <reason>` CRLF, then each field as `Name: value` CRLF, then one CRLF. It is the client's report, **not a wire capture** (byte-exactness against the wire: UNVERIFIED). V1 and V12b read the status and `Date` from this artifact (R4.2e D-8).
++   - **Header artifact:** the status line and header fields **as reported by the HTTP client**, in received order and original case: `HTTP/<version> <status> <reason>` CRLF, then each field as `Name: value` CRLF, then one CRLF. It is the client's report, **not a wire capture** (byte-exactness against the wire: UNVERIFIED). V1 and V12b read the status and `Date` from this artifact (R4.2f D-8).
+ 2. Every numeric value is converted to an exact value (§5.1) from its **original JSON number token text**. No binary floating-point value exists anywhere in the decision, sizing, policy, ledger or audit paths, in the harness or in the reconstructor.
+ 3. Exponent forms are valid. Non-finite or non-numeric tokens where a number is required are malformed (§4.10).
+ 4. For each bar, the token text of o, h, l, c, v, vw and n is kept in the TER (§10.4).
+@@ -253,7 +253,7 @@ Missing history is a data failure (§4.7), never HOLD.
+ | ID | Check | Failure → NO_DECISION sub-reason |
+ |---|---|---|
+ | V1 | HTTP 200; well-formed JSON; required fields present (bars: t, o, h, l, c, v, n, vw; response: next_page_token); **the response's symbol key is exactly `BTC/USD`** for both bars and quote, with no other symbol present (U95) | FETCH_FAILED / INCOMPLETE_RESPONSE |
+-| V2 | `next_page_token` is JSON `null`. Any other value, including an empty string, fails; no further page is fetched (R4.2e D-1; with `limit=1000` and a 59-bar window a token is not expected, and the A-0 probe returned `null`, OBSERVED) | INCOMPLETE_RESPONSE |
++| V2 | `next_page_token` is JSON `null`. Any other value, including an empty string, fails; no further page is fetched (R4.2f D-1; with `limit=1000` and a 59-bar window a token is not expected, and the A-0 probe returned `null`, OBSERVED) | INCOMPLETE_RESPONSE |
+ | V3 | every `t` parses (§4.4) and lies on a 300 s boundary | MALFORMED_VALUE |
+ | V4 | `t` unique within the response. Byte-identical duplicates collapse with a note; differing duplicates fail | DATA_CONFLICT |
+ | V5 | arrival order recorded; bars sorted ascending by t | — (never fails) |
+@@ -286,7 +286,7 @@ Missing history is a data failure (§4.7), never HOLD.
+ - It is **not a separate mutable file.** It is the deterministic fold of every CYCLE record in the global chain (§10), across all cycles and runs.
+ - Any reviewer can rebuild it from the chain.
+ 
+-**Per cycle, for every completed bar fetched, provided the bars response passes V1, V2, V3, V4 and V9** (R4.2e D-6). A response that fails any of them contributes **no** observation, revision, confirmation or disappearance to the store; its bars remain recorded in the TER:
++**Per cycle, for every completed bar fetched, provided the bars response passes V1, V2, V3, V4 and V9** (R4.2f D-6). A response that fails any of them contributes **no** observation, revision, confirmation or disappearance to the store; its bars remain recorded in the TER:
+ 
+ | Situation | Action |
+ |---|---|
+@@ -419,7 +419,7 @@ All instants are in ns (§4.4). Every inequality in §5.3 to §5.5 is evaluated
+ | issuance timely | issued ≤ approval_deadline (U90) |
+ | authorization live | now < expires_at (strict: expired **at** expires_at) |
+ | LP-PRESEND passes | now ≤ expires_at − δ_send, with 0 < δ_send < 60 s (§9.4) |
+-| cycle within slot | the append began before the boundary: `lock_clock_at` < T_d(i+1) (§6.4 step 8; harness clock; HARNESS-ATTESTED, §11.1), and the record precedes every record of a later slot in the chain. Completion and durability are bounded by that ordering only (§15 U-T5) |
++| cycle within slot | the append began before the boundary: `lock_clock_at` < T_d(i+1) (§6.4 step 8; harness clock; HARNESS-ATTESTED, §11.1), and the record precedes every record of a later slot in the chain (file order). Completion and durability are bounded by that order only (§15 U-T5) |
+ 
+ ### 5.5 Rationale for the bounds (DERIVED)
+ 
+@@ -481,7 +481,7 @@ Lateness within a slot does not change the slot (DERIVED).
+ **The append lock:**
+ - The global chain file (§10.1) has one **append lock**, an OS exclusive file lock.
+ - **Every** chain append happens under it.
+-- An appender must hold the **run lock token** for its slot and must find now < T_d(its slot + 1). Otherwise the append is refused and the process exits.
++- An appender must hold the **run lock token** for its slot and must find now < T_d(its slot + 1). Otherwise the append is refused and the process exits. For a CYCLE record, *now* is `lock_clock_at` (§6.4 step 8). An INJECTION token holder has no slot: it appends only while it still holds the token (§6.5) (R4.2f D-3).
+ 
+ **Run lock token.** The token is a record of (slot index, process id, acquired_at). It is acquired and transferred only under the append lock.
+ 
+@@ -502,10 +502,10 @@ Lateness within a slot does not change the slot (DERIVED).
+ ### 6.4 Cycle procedure (per slot)
+ 
+ 1. **Pre-fetch boundary check (V12a):**
+-   - **credential, defined for V12a (R4.2e D-2):** an environment variable whose name, compared case-insensitively, begins with `APCA_` or `ALPACA_`; or any key in the harness configuration file other than `client_allowlist`. The configuration file is the closed JSON object `{"client_allowlist": [...]}`;
++   - **credential, defined for V12a (R4.2f D-2):** an environment variable whose name, compared case-insensitively, begins with `APCA_` or `ALPACA_`; or any key in the harness configuration file other than `client_allowlist`. The configuration file is the closed JSON object `{"client_allowlist": [...]}`;
+    - no credential in the process environment variables or the harness configuration file (the checked scope, §2.2);
+    - the allowlist reported by the harness HTTP client object at check time is exactly `["data.alpaca.markets"]` and equals the configuration file's `client_allowlist`;
+-   - **scope (R4.2e D-2):** the name pattern and the closed configuration file **define the checked scope only**. A pass does not establish that no credential exists under another name, in another store, or in another form (U-I2), and it is no isolation claim (§2.3);
++   - **scope (R4.2f D-2):** the name pattern and the closed configuration file **define the checked scope only**. A pass does not establish that no credential exists under another name, in another store, or in another form (U-I2), and it is no isolation claim (§2.3);
+    - **recorded as V12a evidence (§10.4):** the names, never the values, of the matching environment variables; the configuration file's SHA-256; the client-reported allowlist. The configuration file's bytes are stored as an artifact **only if V12a passes** (on failure they may hold a secret, so only the hash is kept);
+    - Failure → a BOUNDARY_FAIL CYCLE record; no fetch.
+ 2. **Fetch** bars, recording t_send and t_recv (§5.6). Store the raw artifacts (§10.2). **If the request ends without an HTTP response** (connection error, reset, or a client timeout if the harness sets one): NO_DECISION (FETCH_FAILED); V12b is NOT_EVALUATED (FETCH_FAILED); the quote is not fetched (U112).
+@@ -517,20 +517,21 @@ Lateness within a slot does not change the slot (DERIVED).
+ 8. **Commit** the CYCLE record (§10.4):
+    - for HOLD, NO_ACTION, NO_DECISION and BOUNDARY_FAIL: immediately;
+    - for a proposal: at REJECTED, or at SHADOW_EXPIRED when the ceiling is reached.
+-   - **Append clock sample (R4.2e D-3):** holding the append lock, the harness reads its wall clock as `lock_clock_at`, records it in the TER, and proceeds only if `lock_clock_at` < T_d(i+1); for SHADOW_EXPIRED it also requires `lock_clock_at` ≥ the ceiling (§5.3). Otherwise the append is refused. It then writes the record line, flushes, calls fsync on the chain file, and only then releases the append lock.
+-   - **What `lock_clock_at` is and is not (R4.2e D-3):** it is the instant at which the append **began** (harness clock), not the instant the record was completely written, and not proof of durable storage. Completion and fsync are **not timestamped**. Their bound is ordering: no later slot's invocation can read the token state until the lock is released after fsync (§6.3), so a completed slot-i record precedes every record of a later slot in the chain. A completion after T_d(i+1) by the write-and-fsync duration is **not excluded** (§15 U-T5). A record lost before fsync leaves the slot without a CYCLE record, which classifies as INCOMPLETE or OVERRUN (fail-closed). Durable evidence of a record is its presence in a pushed commit (§10.1, §11.3).
+-   - The commit must happen before T_d(i+1). **A cycle that has not committed by T_d(i+1) is overrun.** It is recorded as CYCLE_OVERRUN by the successor invocation (§6.3) or, for the last slot of a run, by RUN_CLOSE (§10.1). If neither exists, the auditor classifies the slot INCOMPLETE (§11.2). *(Gemini B2-01.)*
++   - **Append clock sample (R4.2f D-3):** holding the append lock, the harness reads its wall clock as `lock_clock_at`, records it in the TER, and proceeds only if `lock_clock_at` < T_d(i+1); for SHADOW_EXPIRED it also requires `lock_clock_at` ≥ the ceiling (§5.3). Otherwise the append is refused. It then writes the record line, flushes, calls fsync on the chain file, and only then releases the append lock. A process that is terminated holds no lock: the operating system releases it, whether or not fsync completed.
++   - **What `lock_clock_at` is and is not (R4.2f D-3):** it is the instant at which the append **began** (harness clock). It is not the instant the record was completely written, and not proof of durable storage. Completion and fsync are **not timestamped**, and **a surviving record shows that it was written, not that fsync completed**: a process terminated after the write and before fsync can leave a complete, readable record. What the chain does establish is **file order**: every later append, including a later slot's, is made under the same lock after the lock is released, so it follows every byte already written. A completion after T_d(i+1) by the write-and-fsync duration is **not excluded** (§15 U-T5). A record that never reaches the file leaves the slot without a CYCLE record, which classifies as INCOMPLETE or OVERRUN (fail-closed). Durable evidence of a record is its presence in a pushed commit (§10.1, §11.3).
++   - **Deadline (R4.2f D-3):** the CYCLE append must **begin** before T_d(i+1), that is `lock_clock_at` < T_d(i+1). **A cycle whose CYCLE append has not begun by T_d(i+1) is overrun.** An append that begins before T_d(i+1) and completes after it is **in-slot**: its successor finds a terminal record and writes no CYCLE_OVERRUN (U117). It is recorded as CYCLE_OVERRUN by the successor invocation (§6.3) or, for the last slot of a run, by RUN_CLOSE (§10.1). If neither exists, the auditor classifies the slot INCOMPLETE (§11.2). *(Gemini B2-01.)*
+ 
+ ### 6.5 Injections
+ 
+ - Injected proposals (`origin: INJECTED`) are run only on the founder's command.
+ - They use fixture inputs, never live slots. They take the run lock token as an INJECTION. They may not start within 30 s of the next T_d. They are aborted by any slot invocation (§6.3).
+ - They are recorded as INJECTION records and **never occupy or satisfy a slot**.
+-- **Stage A injections are BUY fixtures only** (R4.2e D-4). The EXIT-branch rules R9 and R15 are evidenced by unit tests only (§3.3, OI-08).
++- **Stage A injections are BUY fixtures only** (R4.2f D-4). The EXIT-branch rules R9 and R15 are evidenced by unit tests only (§3.3, OI-08).
+ - **This restriction applies to the M1-1 injections only.** It removes no §14 test and does not change the §11.6 pre-live gate. The EXIT proposal, R9, R15, BUY-while-long and every other long-position case are still required as **executed, fixture-backed unit tests** before the first live cycle.
+-- **Reachability (DERIVED; COMPUTED by `sl_pt_001_cl03_fixture_check.py`):** a flat BUY fixture can fail **exactly one** rule only for R1, R4, R5, R10, R12 and R13. R6 and R7 cannot fail, because R ≤ budget ≤ min($150, cash_available) by construction (§8.1.1). R8 cannot fail while flat, because q ≥ min_order_size requires L ≤ $150 / (0.0001 × 1.0025), so (held BTC × bid) + R < 0.0001 × (L + 1) + $150 < $300 (bid ≤ ask by Q3). R2, R3, R11 and R16 cannot fail for a constructed BUY (always LIMIT and schema-valid; an open authorization blocks the proposal, §3.3). The FAIL cases of R2, R3, R6, R7, R8, R11 and R16 are therefore **evaluator-level unit tests** with directly constructed proposals or ledgers (U121), not injections.
++- **Reachability (DERIVED; COMPUTED by `sl_pt_001_cl03_fixture_check_v2.py`):** a normally constructed flat BUY fixture can fail **exactly one** rule only for R1, R4, R5, R10, R12 and R13. In a normally constructed BUY, R6 and R7 cannot fail, because R ≤ budget ≤ min($150, cash_available) (§8.1.1). **R8 cannot fail independently of R10** in a normally constructed flat BUY under the specified policy values: if q ≥ min_order_size then L ≤ $150 / (0.0001 × 1.0025), so (held BTC × bid) + R < 0.0001 × (L + 1) + $150 < $300 (bid ≤ ask by Q3); if q < min_order_size, R10 fails as well, and R8 may then fail with it (G6-03). R2, R3, R11 and R16 cannot fail for a constructed BUY (always LIMIT and schema-valid; an open authorization blocks the proposal, §3.3). The FAIL cases of R2, R3, R6, R7, R8, R11 and R16 are therefore **evaluator-level unit tests** with directly constructed proposals or ledgers (U121), not injections.
+ - **Injection plan:** before any injection it lists, the founder commits and pushes `injections/<name>.json`, listing for each injection its fixture SHA-256 and its intended rule code. Fixtures are founder-committed at `injections/fixtures/<sha256>.json`. A fixture fixes every input of §7.1 for one BUY: the quote response bytes, a fixture T_d, the checkpoint-(a) instant, the shadow ledger state (cash, BTC, reservations, open authorizations) and the policy hash. Its exact JSON shape is defined by the interface contract.
+-- The INJECTION record's TER carries the plan SHA-256, the fixture SHA-256 and the intended rule (§10.4).
++- The INJECTION record's TER carries the plan SHA-256, the fixture SHA-256 and the intended rule (§10.4), in the INJECTED form of §10.4.
++- **Injections run only while a run is open** (after its RUN_OPEN, before its RUN_CLOSE). They never enter the bar store and never acquire slot credit (R4.2f D-4).
+ 
+ ---
+ 
+@@ -557,7 +558,7 @@ Lateness within a slot does not change the slot (DERIVED).
+ |---|---|---|---|---|
+ | R1 | instrument allowlisted | BTC/USD | A, B | settled |
+ | R2 | limit order; TIF allowlisted; `partial_fill_accepted` = true | TIF DEFERRED | B (A: limit) | FD-4 |
+-| R3 | proposal schema complete and valid: every field present, with the type and grid of §10.4. Value bounds belong to R4 to R13 (so q = 0 is schema-valid and is R10's case; R4.2e D-4) | — | A, B | — |
++| R3 | proposal schema complete and valid: every field present, with the type and grid of §10.4. Value bounds belong to R4 to R13 (so q = 0 is schema-valid and is R10's case; R4.2f D-4) | — | A, B | — |
+ | R4 | quote fresh at the checkpoint (§5.4) | 15 s | A: (a); B: (a)–(d) | — |
+ | R5 | \|L − mid\| ≤ 0.01 × mid, with mid = (bid + ask) / 2 of the checkpoint quote | ±1% | A, B | — |
+ | R6 | R ≤ cash_available (§8) | — | A, B | — |
+@@ -614,7 +615,7 @@ Lateness within a slot does not change the slot (DERIVED).
+ | R | ceil to the cent of q × L × (1 + f_res) |
+ | shadow_reserved_btc | 0 before step 3 of §7.1. Set to q_exit when an EXIT proposal passes every rule at checkpoint (a); released at SHADOW_EXPIRED in the same cycle |
+ | q_exit | floor to `qty_increment` of (shadow BTC − shadow_reserved_btc). Shadow BTC is always 0 on live data, so EXIT proposals arise only from fixtures (§3.3) |
+-| EXIT applicability | an EXIT proposal has no R and no budget (§7.1 step 3). **R6, R7, R8 and R12 do not apply to EXIT**; R9 and R15 apply to EXIT only (R4.2e D-4) |
++| EXIT applicability | an EXIT proposal has no R and no budget (§7.1 step 3). **R6, R7, R8 and R12 do not apply to EXIT**; R9 and R15 apply to EXIT only (R4.2f D-4) |
+ 
+ **Rules:**
+ - R6, R7 and R10 (§7.3) are evaluated against these values. **R ≤ budget ≤ $150.00 holds by construction** (DERIVED, given L > 0, f_res ≥ 0 and shadow_cash on the cent grid: q × L × (1 + f_res) ≤ budget, and budget is on the cent grid), but R7 is still evaluated and recorded.
+@@ -804,7 +805,7 @@ Each condition means: stop, record, and no new authorization until it is resolve
+ - The **invocation log** (`chain/invocations/<manifest_sha256>.log`) is owned and written **only by the wrapper**; it is append-only.
+ - **Manifests** (`runs/<name>.json`) are owned by the **founder**.
+ - **Orphaned artifacts** (*GPT G-05*): an artifact not referenced by any committed chain record (for example, fetched by a cycle that crashed before committing) is **not evidence**. The auditor lists orphaned artifacts in its report and never uses them in reconstruction. Such a slot cannot qualify (§11.2).
+-- **Injection plans and fixtures** (`injections/`) are owned by the **founder** (§6.5; R4.2e D-4).
++- **Injection plans and fixtures** (`injections/`) are owned by the **founder** (§6.5; R4.2f D-4).
+ - Nothing else writes these files.
+ 
+ ### 10.3 Run manifest (founder-authored; immutable)
+@@ -840,13 +841,13 @@ Each condition means: stop, record, and no new authorization until it is resolve
+ - `terminal_state`, from the closed set (§11.1);
+ - policy hash; displayed sizes; `egress_scope` = "CLIENT_ALLOWLIST_ONLY" (§2.3). *Renamed from R4.1's "isolation-branch marker" so the field cannot be read as an isolation claim (Gemini B2-06);*
+ - t_send, t_recv, D, θ_low, θ_high (§5.6);
+-- `lock_clock_at` (§6.4 step 8; R4.2e D-3), always present: the clock sample at the start of the append, not its completion;
+-- V12a evidence `{env_credential_names, config_sha256, client_allowlist}` (§6.4 step 1; R4.2e D-2), always present; `config_sha256` is `null` only if the configuration file cannot be read (then V12a = FAIL); the two lists are arrays, `[]` when empty;
+-- injection fields `{plan_sha256, fixture_sha256, intended_rule}` (§6.5; R4.2e D-4); JSON `null` as a whole object when `origin` = SCHEDULED;
++- `lock_clock_at` (§6.4 step 8; R4.2f D-3), always present: the clock sample at the start of the append, not its completion;
++- V12a evidence `{env_credential_names, config_sha256, client_allowlist}` (§6.4 step 1; R4.2f D-2), always present; `config_sha256` is `null` only if the configuration file cannot be read (then V12a = FAIL); the two lists are arrays, `[]` when empty;
++- injection fields `{plan_sha256, fixture_sha256, intended_rule}` (§6.5; R4.2f D-4); JSON `null` as a whole object when `origin` = SCHEDULED;
+ - for each bar used: its bar-store state and observation count (§4.9).
+ 
+ **Unevaluated checks and absent artifacts (every field is always present; omission is invalid):**
+-- each V1 to V11, V12a, V12b and Q1 to Q5 result is one of `PASS`, `FAIL` or `NOT_EVALUATED`. A `NOT_EVALUATED` result carries a reason: `V12A_FAILED`, `V12B_FAILED`, `FETCH_FAILED` (the bars request got no response), `DATA_INVALID` (a V1 to V11 failure), or `NO_PROPOSAL`;
++- each V1 to V11, V12a, V12b and Q1 to Q5 result is one of `PASS`, `FAIL` or `NOT_EVALUATED`. A `NOT_EVALUATED` result carries a reason: `V12A_FAILED`, `V12B_FAILED`, `FETCH_FAILED` (the bars request got no response), `DATA_INVALID` (a V1 to V11 failure), `NO_PROPOSAL`, or `INJECTED` (an injection, which fetches no bars; R4.2f D-4);
+ - an artifact hash, the clock fields (t_send, t_recv, D, θ_low, θ_high) and the computed values (S20, S50, D(k−1), D(k), signal, mapping, proposal) are JSON `null` when they do not exist;
+ - **requests:** the TER has exactly two request objects, `bars_request` and `quote_request`, each `{url, sent_at, received_at, outcome}`. A request that was never issued is JSON `null` as a whole object. A request that was issued has `url` and `sent_at` as strings, and `outcome` ∈ {`RESPONSE`, `NO_RESPONSE`}. `received_at` is a string when `outcome` = `RESPONSE`, and `null` when `outcome` = `NO_RESPONSE` (issued, but no HTTP response received). A request with `NO_RESPONSE` has a `null` artifact hash;
+ - **collections** (per-bar token tuples, excluded bars, bar-store transitions, rule results) are JSON arrays, **always present**. They are the empty array `[]` when there is nothing to record, including when the bars were never fetched or never parsed;
+@@ -861,6 +862,7 @@ Each condition means: stop, record, and no new authorization until it is resolve
+ | HOLD or NO_ACTION | everything through the mapping | Q1 to Q5 NOT_EVALUATED (NO_PROPOSAL); proposal `null` |
+ | QUOTE_INVALID | everything through the mapping; Q1 to Q5 **evaluated** (PASS/FAIL), at least one FAIL. If the quote request got no response, `quote_request.outcome` = NO_RESPONSE, the quote artifact is `null`, and Q1 to Q5 are FAIL (the quote is absent, §4.11) | proposal `null`; rule results `[]` |
+ | a proposal (REJECTED, SHADOW_EXPIRED) | everything | — |
++| an injection (`origin` = INJECTED; R4.2f D-4) | `manifest_sha256` of the open run; `invocation_instant` = the founder's command instant; `T_d` and `created` from the fixture; `quote_sha256` = SHA-256 of the fixture's quote bytes; V12a evaluated; Q1 to Q5 evaluated on the fixture quote; `displayed_sizes` from it; the proposal; every applicable rule result; `lock_clock_at`; the injection fields. Terminal: REJECTED, SHADOW_EXPIRED (recorded at once: the §5.3 ceiling applies to scheduled cycles only), BOUNDARY_FAIL (V12a) or NO_DECISION (QUOTE_INVALID) | `slot_index`, `cycle_id`, `bars_request` and `quote_request` `null`; bars and header artifact hashes and the clock fields (t_send, t_recv, D, θ_low, θ_high) `null`; S20, S50, D(k−1), D(k), signal and mapping `null`; V1 to V11 and V12b NOT_EVALUATED (INJECTED); collections `[]`. On V12a FAIL the V12a-row rules apply instead |
+ 
+ **Encoding rule:** **every numeric value is encoded as a JSON string** holding the exact decimal or the integer ns. **No JSON numbers appear in a TER** (U88), because canonical JSON serializes numbers as IEEE doubles (§10.5).
+ 
+@@ -889,7 +891,7 @@ Each condition means: stop, record, and no new authorization until it is resolve
+ | REJECTED | V pass; D recomputed; Q1 to Q5 pass; a proposal constructed; ≥ 1 rule fails on recomputation (including the R13 cutoff) |
+ | SHADOW_EXPIRED | V pass; D recomputed; Q pass; all rules pass on recomputation; `lock_clock_at` ≥ ceiling and < T_d(i+1) |
+ 
+-**Harness-attested conditions (R4.2e D-2, D-3).** V12a examines process state that leaves no external artifact, and `lock_clock_at` is read from the harness clock. The auditor's V12a recomputation shows **only that the observations the harness recorded satisfy the V12a rule**. It is **CONDITIONAL on those observations being true**, which nothing external confirms. Likewise the auditor checks `lock_clock_at` against §5.4 and against chain order, which shows when the append began by the harness's own clock. Both are **HARNESS-ATTESTED**, not independently observed (§15 U-I3, U-T5), and every Stage A result says so. Under Branch C (§2.3) no specification change can make them independent; that would need Branch H.
++**Harness-attested conditions (R4.2f D-2, D-3).** V12a examines process state that leaves no external artifact, and `lock_clock_at` is read from the harness clock. The auditor's V12a recomputation shows **only that the observations the harness recorded satisfy the V12a rule**. It is **CONDITIONAL on those observations being true**, which nothing external confirms. Likewise the auditor checks `lock_clock_at` against §5.4 and against chain order, which shows when the append began by the harness's own clock. Both are **HARNESS-ATTESTED**, not independently observed (§15 U-I3, U-T5), and every Stage A result says so. Making them independent would need separately trusted instrumentation outside the harness, which is outside the Stage A scope (G6-06).
+ 
+ ### 11.2 Slot classification
+ 
+@@ -939,14 +941,14 @@ The auditor:
+ 
+ - run_length = the longest run of consecutive QUALIFYING slots **within one manifest**.
+ - **M1-1 is met iff run_length ≥ 30 and ≥ 5 runtime injections were rejected by the intended rule.**
+-- **Rejected by the intended rule (R4.2e D-4)** means: the injection's plan and fixture were committed and pushed before its INJECTION record; recomputation from the fixture gives FAIL for the intended rule and PASS for every other applicable rule; and its fixture differs from every other counted injection's fixture.
++- **Rejected by the intended rule (R4.2f D-4)** means all of: (1) the injection's plan and fixture were committed and pushed before its INJECTION record; (2) the **recorded** terminal state is REJECTED; (3) the **recorded** failing-rule set is exactly the intended rule; (4) the auditor's independent recomputation from the fixture gives the same terminal state and the same failing set (FAIL for the intended rule, PASS for every other applicable rule); and (5) its fixture differs from every other counted injection's fixture. A recorded result that disagrees with recomputation is a finding and is never counted.
+ - The harness's own counter, if any, is never evidence. Any mismatch with the audit is reported.
+ 
+ ### 11.5 Auditor and reconstruction (FD-6)
+ 
+ **Author:** GPT, after the freeze, from the frozen set only. The script's hash is committed before any TER exists.
+ - It performs **(a)** the blind reconstruction of 5 cycles drawn by a seed committed before the run, and **(b)** the full slot audit (§11.2, §11.3).
+-- **Seed and evidence custody (R4.2e D-7; commit-reveal).** "Committed" means commit-reveal, in this order, each step a pushed commit:
++- **Seed and evidence custody (R4.2f D-7; commit-reveal).** "Committed" means commit-reveal, in this order, each step a pushed commit:
+   1. **Seed commitment**, before T_d0 of the first audited run: the founder generates the seed as 32 bytes from the operating system's cryptographic random source, written as 64 lowercase hex characters, and commits and pushes only SHA-256 of those 64 ASCII bytes (no newline). The seed is never disclosed to the harness author before step 3.
+   2. **Evidence fixing**, after RUN_CLOSE of the last audited run and **before** the reveal: the founder commits and pushes an audit-scope record naming the evidence commit to be audited, the chain head hash at that commit, the audited manifests, and the **eligible population**: the count, and the first and last `seq`, of the SCHEDULED CYCLE records of those manifests in the chain up to that head.
+   3. **Reveal**, in a later commit: the seed itself.
+@@ -974,8 +976,8 @@ The auditor:
+ | M1-6 reconstruction | 5 seeded cycles reconstructed by the FD-6 script with 0 unexplained differences |
+ | M1-7 honesty | no performance claim beyond the sample |
+ 
+-**Test coverage (pre-live gate):** before the first live-data cycle, at least one **EXECUTED** pass case and fail case for every rule applicable in Stage A (R1 to R13, R15, R16; R2 = its limit-order check, R4.2e D-5), plus every §14 test whose Stage column contains "A", with the evidence retained.
+-- **R2's limit-order check applies in Stage A (§7.3); its TIF and `partial_fill_accepted` parts, and R14, exist only in Stage B** (R4.2e D-5). Those Stage B tests belong to the Stage B gate, before the first order.
++**Test coverage (pre-live gate):** before the first live-data cycle, at least one **EXECUTED** pass case and fail case for every rule applicable in Stage A (R1 to R13, R15, R16; R2 = its limit-order check, R4.2f D-5), plus every §14 test whose Stage column contains "A", with the evidence retained.
++- **R2's limit-order check applies in Stage A (§7.3); its TIF and `partial_fill_accepted` parts, and R14, exist only in Stage B** (R4.2f D-5). Those Stage B tests belong to the Stage B gate, before the first order.
+ 
+ ---
+ 
+@@ -1009,7 +1011,7 @@ The auditor:
+ - broker behaviour;
+ - **any G-07 property.**
+ - **process-level or host-level isolation** (Branch C, §2.3). Every Stage A result carries the §2.3 limitation statement verbatim.
+-- **absence of credentials beyond the checked scope** (§2.2, §6.4 step 1), or any V12a or commit-timing property stronger than HARNESS-ATTESTED (§11.1; R4.2e D-2, D-3).
++- **absence of credentials beyond the checked scope** (§2.2, §6.4 step 1), or any V12a or commit-timing property stronger than HARNESS-ATTESTED (§11.1; R4.2f D-2, D-3).
+ 
+ Thirty slots are not thirty trades. **Qualifying NO_ACTION slots from EXIT-while-flat show only that the signal and mapping ran correctly on live data; they do not exercise any position logic** (§11.3).
+ 
+@@ -1187,13 +1189,13 @@ Thirty slots are not thirty trades. **Qualifying NO_ACTION slots from EXIT-while
+ | U112 | the bars request ends with no HTTP response | TER per §10.4's "no response" row; NO_DECISION (FETCH_FAILED); slot non-qualifying | A |
+ | U113 | the quote request ends with no HTTP response: (a) signal HOLD; (b) signal BUY, flat | (a) HOLD, `quote_request.outcome` = NO_RESPONSE; (b) NO_DECISION (QUOTE_INVALID), Q1 to Q5 FAIL | A |
+ | U114 | an OFF_RUN record with an altered byte, or an unknown field | integrity finding from §11.3 step 1 | A |
+-| U115 | a bars response failing V9 (one `c` token `"NaN"`), followed next slot by a valid response | first cycle: no bar-store events; second cycle compares against the earlier accepted tuples (R4.2e D-6) | A |
+-| U116 | V12a: environment variable `APCA_API_KEY_ID` set (any value); separately, a configuration file with an extra key, and one whose allowlist differs from `["data.alpaca.markets"]` | BOUNDARY_FAIL in each case; the variable's name is recorded and its value is not; on failure the configuration bytes are not stored, only their hash (R4.2e D-2) | A |
+-| U117 | a CYCLE append attempted with `lock_clock_at` ≥ T_d(i+1); separately, a SHADOW_EXPIRED record with `lock_clock_at` < ceiling; separately, a process killed after the write and before fsync | append refused and the successor writes CYCLE_OVERRUN; an early SHADOW_EXPIRED is an auditor finding and the slot is NON-QUALIFYING; a record missing after the kill leaves the slot INCOMPLETE or OVERRUN, never QUALIFYING (R4.2e D-3) | A |
+-| U118 | injections: (a) plan or fixture committed after the INJECTION record; (b) a second rule also fails; (c) the same fixture counted twice; (d) a valid case | (a)–(c) not counted toward M1-1; (d) counted (R4.2e D-4) | A |
+-| U119 | R2: the policy evaluator given a proposal whose order type is not LIMIT | REJECTED (R2) (R4.2e D-5) | A |
+-| U121 | evaluator-level FAIL cases with directly constructed inputs: R2 (order type not LIMIT), R3 (a missing field), R6 (R > cash_available), R7 (R > $150), R8 (BTC notional + R > $300), R11 and R16 (an open authorization); and EXIT: R9 (q_exit > held − reserved), R15 (EXIT while flat) | REJECTED with exactly the constructed rule failing; for the open-authorization case exactly R11 and R16 fail (R4.2e D-4) | A |
+-| U120 | seed custody: (a) the revealed seed's SHA-256 differs from step 1; (b) evidence commit or chain head differs from step 2; (c) the recomputed population differs from step 2; (d) the reveal precedes step 2; (e) a second seed commitment for the same manifests | M1-6 not met in each case (R4.2e D-7) | A |
++| U115 | a bars response failing V9 (one `c` token `"NaN"`), followed next slot by a valid response | first cycle: no bar-store events; second cycle compares against the earlier accepted tuples (R4.2f D-6) | A |
++| U116 | V12a: environment variable `APCA_API_KEY_ID` set (any value); separately, a configuration file with an extra key, and one whose allowlist differs from `["data.alpaca.markets"]` | BOUNDARY_FAIL in each case; the variable's name is recorded and its value is not; on failure the configuration bytes are not stored, only their hash (R4.2f D-2) | A |
++| U117 | (a) a CYCLE append attempted with `lock_clock_at` ≥ T_d(i+1); (b) a SHADOW_EXPIRED record with `lock_clock_at` < ceiling; (c) an append with `lock_clock_at` < T_d(i+1) whose write completes after T_d(i+1); (d) a process killed after the write and before fsync; (e) a process killed before the write | (a) append refused; the successor writes CYCLE_OVERRUN. (b) auditor finding; NON-QUALIFYING. (c) in-slot; the successor writes no CYCLE_OVERRUN; classified by §11.2 as any other record. (d) the surviving record is classified like (c); no claim that fsync completed. (e) no CYCLE record: INCOMPLETE or OVERRUN, never QUALIFYING (R4.2f D-3) | A |
++| U118 | injections: (a) plan or fixture committed after the INJECTION record; (b) a second rule also fails; (c) the same fixture counted twice; (d) a valid case; (e) a fixture that fails its intended rule on recomputation, but whose record shows SHADOW_EXPIRED or the rule as PASS | (a)–(c) and (e) not counted toward M1-1, and (e) is a finding; (d) counted (R4.2f D-4) | A |
++| U119 | R2: the policy evaluator given a proposal whose order type is not LIMIT | REJECTED (R2) (R4.2f D-5) | A |
++| U121 | evaluator-level cases with directly constructed inputs, over every rule applicable to the side; the expected failing set is exact (COMPUTED by `sl_pt_001_cl03_fixture_check_v2.py`): R2, order type not LIMIT → {R2}; R3, a missing field → {R3}; R6, R > cash_available → {R6}; R7, R > $150 → {R7}; R8, BUY with a long ledger → {R8}; an open authorization → {R11, R16}; R9, EXIT with q_exit > held − reserved while long → {R9}; EXIT while flat (q_exit = 0) → {R10, R15}; a normal EXIT while long and a normal BUY while flat → {} (R4.2f D-4) | A |
++| U120 | seed custody: (a) the revealed seed's SHA-256 differs from step 1; (b) evidence commit or chain head differs from step 2; (c) the recomputed population differs from step 2; (d) the reveal precedes step 2; (e) a second seed commitment for the same manifests | M1-6 not met in each case (R4.2f D-7) | A |
+ 
+ **Fixture-backed tests** (U14, X5, X6, and every test using a fixture ledger) are labelled as such. Their results are **not** live-data evidence (*Gemini B2-07*).
+ 
+@@ -1221,8 +1223,8 @@ Scope: **A** = Stage A freeze; **B** = Stage B draft.
+ | U-T2 | A | accuracy of the data host's clock against UTC | UNVERIFIED; the 2 s bound is relative to it | timing claims stay CONDITIONAL (§5.6) |
+ | U-I1 | A | process- or host-level isolation | **not established** (Branch C) | — (disclosed limitation, §2.3) |
+ | U-I2 | A | broker credentials in stores outside the checked scope (§2.2) | **not excluded** | — (disclosed limitation) |
+-| U-I3 | A | V12a's observations and `lock_clock_at` are recorded by the harness itself; recomputation is conditional on them; no external observation (§11.1; R4.2e D-2, D-3) | HARNESS-ATTESTED | — (disclosed limitation) |
+-| U-T5 | A | completion and durable persistence of a chain append are not timestamped; a completion after T_d(i+1) by the write-and-fsync duration is not excluded; bounded only by chain ordering against later slots (§6.4 step 8; R4.2e D-3) | UNBOUNDED (duration); ordering DERIVED | — (disclosed limitation) |
++| U-I3 | A | V12a's observations and `lock_clock_at` are recorded by the harness itself; recomputation is conditional on them; no external observation (§11.1; R4.2f D-2, D-3) | HARNESS-ATTESTED | — (disclosed limitation) |
++| U-T5 | A | completion and durable persistence of a chain append are not timestamped; a completion after T_d(i+1) by the write-and-fsync duration is not excluded; a surviving record does not establish that fsync completed; bounded only by file order against later appends (§6.4 step 8; R4.2f D-3) | UNBOUNDED (duration); ordering DERIVED | — (disclosed limitation) |
+ | U-D9 | A | how long a continuously changing bar keeps slots blocked | UNBOUNDED (fail-closed) | — |
+ | A-CLK | A | the data host generates its `Date` header between t_send and t_recv | ASSUMED (§5.6) | timing claims |
+ | A-CLK2 | A | the harness wall clock does not step during the bars request | ASSUMED (§5.6); only steps larger than the round trip are detected | timing claims |
+@@ -1258,7 +1260,7 @@ Scope: **A** = Stage A freeze; **B** = Stage B draft.
+ 
+ | ID | Scope | Issue | Why it matters | If unresolved | Decision-maker | Blocks |
+ |---|---|---|---|---|---|---|
+-| OI-16 | A | review status: R4.1 reviewed by Gemini B and GPT; R4.2, R4.2a and R4.2b closure-checked (R4.2b by GPT); **R4.2c closure checks pending (GPT: G4-01; Gemini B: B4-01 to B4-03 and G4-01's text)** | the freeze must rest on reviewed text | the freeze would rest on unreviewed corrections | GPT and Gemini B; founder | **Stage A freeze** |
++| OI-16 | A | review status: R4.2c closure-checked and frozen (`030e7c0`). R4.2e closure round: Gemini B FREEZE-READY; GPT NOT FREEZE-READY (G6-01 to G6-06). **R4.2f closure round pending** (GPT and Gemini B; the R4.2e → R4.2f changes only) | the amended freeze must rest on reviewed text | the freeze would rest on unreviewed corrections | GPT and Gemini B; founder | **Stage A freeze (R4.2f)** |
+ | OI-08 | A | Stage A never exercises the long-position branches, R8 or R12 on live data (no shadow fills) | coverage of the policy on live inputs | those branches are evidenced only by tests and injections | founder: accept the limitation at the Stage A exit | Stage A exit (acceptance) |
+ | OI-14 | A | FD-5 harness build | implementation authority | no Stage A evidence | founder, after the Stage A freeze | implementation |
+ | OI-10 | B | FD-4 TIF | order lifetime; the $1-increment BUY-below-ask consequence (§7.2) bears on reaching a fill | Stage B text incomplete | founder | Stage B freeze |
+@@ -1287,4 +1289,4 @@ Scope: **A** = Stage A freeze; **B** = Stage B draft.
+ - GPT has seen everything up to the reconciliation and R4.
+ - **Agreement between them is not independent verification.**
+ 
+-*End of R4.2c candidate.*
++*End of R4.2f candidate.*
