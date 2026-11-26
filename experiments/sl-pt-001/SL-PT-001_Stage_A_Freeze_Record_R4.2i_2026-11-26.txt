@@ -1,0 +1,15 @@
+SL-PT-001 STAGE A SPECIFICATION FREEZE RECORD (AMENDED)
+Date: 2026-11-26
+Status: FROZEN BY FOUNDER (Stage A scope only)
+Frozen document: experiments/sl-pt-001/SL-PT-001_R4.2i_Stage_A_Amendment_Candidate_Claude_2026-11-26.md
+  git blob 3549d2275ce3f5490f93802ff9eec1570f2fb48f
+  SHA-256  4259551121fa3d271074fb13da51fb270ae859b0b516a953752731f20972a51a
+Supersedes, for Stage A: R4.2c (blob 316d08c046dd7e1ea4a61be980c037b1c62037d5, freeze record 030e7c0). Evidence produced under R4.2c stays tied to R4.2c.
+Frozen scope: as R4.2i section 0.2 (Stage A sections and the Stage A rows of sections 14 to 16). Stage B sections remain DRAFT and are not frozen.
+Review basis: closure rounds on R4.2d to R4.2i by GPT and Gemini B, committed verbatim under experiments/sl-pt-001/reviews. Final verdicts on R4.2i: GPT FREEZE-READY (bounded technical scope; E-2 conditional on scoping); Gemini B FREEZE-READY. GPT's R4.2f review (source of G7-01, G7-02) is committed under reviews/.
+Editorial notes (non-normative; no change to frozen text):
+  E-1 X8 and X10 "recorded" means recorded in the retained test output. BOUNDARY_VIOLATION_ATTEMPT is a test-output label, never a chain record type or TER value (cf. U9).
+  E-2 Stage A scope only: a HOLD signal maps to HOLD, and the section 3.3 "any signal + open or unresolved order or authorization" row is applied to BUY and EXIT signals. This is a founder-adopted reading consistent with the section 11.1 qualifying conditions; it is not derived from section 11.1 alone. In Stage A live operation no order or authorization is ever open (section 8.1; R16 vacuous), so the case arises only in unit tests. It makes no claim for Stage B.
+Accepted residuals: those of the R4.2c freeze record; U-I3 (V12a observations and lock_clock_at are HARNESS-ATTESTED); U-T5 (append completion and durability are not timestamped; file order only); runtime injections can demonstrate only R1, R4, R5, R10, R12 and R13, other FAIL cases being unit tests (U121); the header artifact is client-reported, not a wire capture (D-8); INSUFFICIENT_HISTORY is unreachable as a first failure (C-09).
+Seed: the cleartext seed committed at 07f43e0 is superseded and never used (section 11.5). A new seed hash is committed before the first audited run.
+Boundary: this record freezes the Stage A specification only. FD-5 synchronization is recorded separately. Nothing here authorizes credentials, a trading-host connection, Stage B or any order.

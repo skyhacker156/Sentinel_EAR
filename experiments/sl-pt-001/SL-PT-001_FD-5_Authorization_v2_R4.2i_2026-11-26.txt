@@ -1,0 +1,9 @@
+SL-PT-001 FD-5 HARNESS BUILD AUTHORIZATION v2 (SYNCHRONIZED TO R4.2i)
+Date: 2026-11-26
+Status: AUTHORIZED BY FOUNDER
+Basis: amended Stage A freeze record (SL-PT-001_Stage_A_Freeze_Record_R4.2i_2026-11-26.txt), R4.2i blob 3549d2275ce3f5490f93802ff9eec1570f2fb48f.
+Supersedes: FD-5 v1 (5252322), which named R4.2c. Scope and limits are otherwise unchanged.
+Authorized: build the Stage A shadow harness exactly to the frozen R4.2i Stage A sections: keyless, read-only market data from data.alpaca.markets only; Branch C client allowlist; no broker credentials; no order, cancel or account code; Task Scheduler wrapper (invoke and log only); TER-1 records, global chain and artifacts; the Stage A tests of section 14, executed with retained evidence before any live-data cycle.
+Carried forward: the Strike 1a and Strike 1b-pre code and test evidence (harness/, Windows run c86b891), built under FD-5 v1 against requirements unchanged between R4.2c and R4.2i. It is now governed by R4.2i.
+FD-6 order of work: GPT writes TER-1 interface contract v2 and auditor v2 from the R4.2i frozen set only; their hashes are committed before any TER exists and before Strike 2 code relies on them. The harness author is not GPT, and harness internals are not shown to GPT. The founder commits the SHA-256 of a new seed before the first audited run (section 11.5, commit-reveal).
+Not authorized: any Alpaca credential, trading-host connection, paper or live order, live-data harness cycle before the section 11.6 pre-live gate, Stage B code, or any change to frozen text.
