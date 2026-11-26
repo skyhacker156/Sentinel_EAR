@@ -1,13 +1,10 @@
-"""SL-PT-001 Stage A harness: data validation (Strike 1b-pre portion).
+"""SL-PT-001 Stage A harness: data validation.
 
-Implements ONLY requirements whose text is unchanged between frozen R4.2c and candidate R4.2g
-(row-level comparison, COMPUTED): §4.7 rows V3-V10 and V12b plus the evaluation rule, §4.10, §4.11 (Q1-Q5),
-§5.6 (V12b predicate). Authority: FD-5 (5252322), unchanged requirements only.
-
-DEFERRED to the amended freeze (their governing text changes in R4.2g):
-  V1 (D-8 adds the Content-Encoding rule via §4.3), V2 (D-1), V11 and the bar-store fold (D-6), V12a (D-2).
-Inputs are therefore bar and quote objects whose values are still JSON number TOKEN TEXT (strings), as V1
-would hand them over. Nothing here reads a clock, a file or the network.
+Governing text: frozen R4.2i (freeze 5ec5d1b), FD-5 v2. §4.3, §4.4, §4.7 (V1-V12b), §4.9 (bar store, D-6),
+§4.10, §4.11 (Q1-Q5), §5.6 (V12b), §6.4 step 1 (V12a, D-2), §10.4 displayed sizes (G8-01).
+History: V3-V10, Q1-Q5 and the V12b predicate were built first (Strike 1b-pre) against requirements unchanged
+between R4.2c and R4.2i; V1, V2, the bar store, V11, V12a and displayed sizes were added after the freeze.
+Nothing here reads a clock, a file, the environment or the network: every observation is supplied by the caller.
 """
 import re
 
@@ -105,7 +102,7 @@ def validate_bars(bars, T_d_ns):
     return {"results": res, "first_failure": first,
             "subreason": SUBREASON.get(first) if first else None,
             "completed": completed, "excluded": excluded, "duplicate_notes": notes, "window": window,
-            "deferred": ["V1", "V2", "V11", "V12a"]}
+            "evaluated_elsewhere": ["V1", "V2", "V11", "V12a"]}   # check_bars_response, check_V11, boundary_check
 
 
 def window_closes(validation):
@@ -182,3 +179,256 @@ def clock_check(date_header, t_send_ns, t_recv_ns):
           and t_recv_ns - t_send_ns < 3 * NS                              # condition 3
           and theta_low >= -2 * NS and theta_high <= 2 * NS)              # condition 4
     return ("PASS" if ok else "FAIL"), D, theta_low, theta_high
+
+
+# ======================================================================================================
+# Strike 1b completion under FD-5 v2 (governing text: frozen R4.2i, freeze 5ec5d1b).
+#   §4.3 item 1 (D-8 artifacts), §4.7 V1 and V2 (D-1), §4.9 bar store with the D-6 admission rule, V11,
+#   §6.4 step 1 V12a (D-2), §10.4 displayed sizes (G8-01).
+# TER serialization and event-name spellings follow GPT's interface contract, which is not yet at v2:
+# names used below that the contract fixes are PROVISIONAL (contract v1 spelling) until v2 is committed.
+# ======================================================================================================
+import hashlib
+import json
+
+SYMBOL = "BTC/USD"
+
+
+class NumTok(str):
+    """Token text of a JSON number, as it appeared in the body."""
+
+
+class NonNumeric:
+    """A JSON value that is not a number where a number is required (§4.10). parse_number_token refuses it."""
+    __slots__ = ("value",)
+
+    def __init__(self, value):
+        self.value = value
+
+    def __eq__(self, other):
+        return isinstance(other, NonNumeric) and repr(self.value) == repr(other.value)
+
+    def __repr__(self):
+        return f"NonNumeric({self.value!r})"
+
+
+def _reject_constant(name):
+    raise ValueError(f"non-JSON constant {name}")
+
+
+def _no_duplicate_keys(pairs):
+    keys = [k for k, _ in pairs]
+    if len(keys) != len(set(keys)):
+        raise ValueError("duplicate object key")
+    return dict(pairs)
+
+
+def parse_json_tokens(body_bytes):
+    """Strict JSON with number token text preserved (§4.3 items 2-4). NaN/Infinity and duplicate keys are not
+    well-formed JSON here (IMPLEMENTATION READING, fail-closed). Raises ValueError on any failure."""
+    text = body_bytes.decode("utf-8")                                  # UnicodeDecodeError is a ValueError
+    return json.loads(text, parse_float=NumTok, parse_int=NumTok, parse_constant=_reject_constant,
+                      object_pairs_hook=_no_duplicate_keys)
+
+
+def _numeric_or_marker(v):
+    return str(v) if isinstance(v, NumTok) else NonNumeric(v)
+
+
+# --------------------------------------------------------------------------------- header artifact (D-8)
+def build_header_artifact(version, status, reason, fields):
+    """§4.3 D-8: 'HTTP/<version> <status> <reason>' CRLF, each 'Name: value' CRLF in received order, then CRLF.
+    The client's report, not a wire capture."""
+    lines = [f"HTTP/{version} {status} {reason}"] + [f"{n}: {v}" for n, v in fields]
+    return ("\r\n".join(lines) + "\r\n\r\n").encode("latin-1")
+
+
+def parse_header_artifact(raw):
+    """Inverse of build_header_artifact. Returns (status:int, fields:list[(name, value)]). Raises ValueError."""
+    text = raw.decode("latin-1")
+    if not text.endswith("\r\n\r\n"):
+        raise ValueError("header artifact must end with CRLF CRLF")
+    lines = text[:-4].split("\r\n")
+    m = re.fullmatch(r"HTTP/(\d(?:\.\d)?) (\d{3}) ?(.*)", lines[0])
+    if not m:
+        raise ValueError("bad status line")
+    fields = []
+    for line in lines[1:]:
+        name, sep, value = line.partition(": ")
+        if not sep or not name:
+            raise ValueError(f"bad header line: {line!r}")
+        fields.append((name, value))
+    return int(m.group(2)), fields
+
+
+def header_value(fields, name):
+    """Last value of a header, matched case-insensitively; None if absent."""
+    vals = [v for n, v in fields if n.lower() == name.lower()]
+    return vals[-1] if vals else None
+
+
+# ------------------------------------------------------------------------------------------ V1 and V2
+def check_bars_response(header_raw, body_raw):
+    """V1 and V2 on the bars response (§4.7; D-1; D-8).
+
+    V1: HTTP 200; no Content-Encoding other than identity; well-formed JSON; response key next_page_token
+    present; symbol key exactly BTC/USD with no other symbol; every bar has t, o, h, l, c, v, n, vw.
+    Sub-reason mapping (follows contract v1 CONTRACT CHOICE, to be re-checked at v2): HTTP / encoding / JSON /
+    symbol -> FETCH_FAILED; a missing required key -> INCOMPLETE_RESPONSE.
+    V2: next_page_token is JSON null; any other value, including "", fails (INCOMPLETE_RESPONSE). No further
+    page is ever fetched.
+    Returns dict(V1, V2, subreason, bars) where bars hold token text (str) or NonNumeric markers, in arrival order.
+    """
+    out = {"V1": "FAIL", "V2": "NOT_EVALUATED", "subreason": "FETCH_FAILED", "bars": []}
+    try:
+        status, fields = parse_header_artifact(header_raw)
+    except ValueError:
+        return out
+    enc = header_value(fields, "Content-Encoding")
+    if status != 200 or (enc is not None and enc.strip().lower() != "identity"):
+        return out
+    try:
+        doc = parse_json_tokens(body_raw)
+    except ValueError:
+        return out
+    if not isinstance(doc, dict) or not isinstance(doc.get("bars"), dict):
+        out["subreason"] = "INCOMPLETE_RESPONSE" if isinstance(doc, dict) else "FETCH_FAILED"
+        return out
+    if set(doc["bars"]) != {SYMBOL}:
+        return out                                                     # wrong or extra symbol (U95)
+    if "next_page_token" not in doc or not isinstance(doc["bars"][SYMBOL], list):
+        out["subreason"] = "INCOMPLETE_RESPONSE"                      # U94: key absent
+        return out
+    bars = []
+    for b in doc["bars"][SYMBOL]:
+        if not isinstance(b, dict) or not all(k in b for k in ("t",) + BAR_FIELDS):
+            out["subreason"] = "INCOMPLETE_RESPONSE"
+            return out
+        row = {"t": b["t"] if isinstance(b["t"], str) and not isinstance(b["t"], NumTok) else NonNumeric(b["t"])}
+        row.update({f: _numeric_or_marker(b[f]) for f in BAR_FIELDS})
+        bars.append(row)
+    out.update(V1="PASS", subreason=None, bars=bars)
+    if doc["next_page_token"] is not None:
+        out.update(V2="FAIL", subreason="INCOMPLETE_RESPONSE")         # U13; D-1
+    else:
+        out["V2"] = "PASS"
+    return out
+
+
+def check_quote_response(header_raw, body_raw):
+    """The quote response (§4.11; U95; U113). Follows contract v1 CONTRACT CHOICE (re-check at v2):
+    - a quote response that parses and is keyed by any symbol other than exactly BTC/USD fails V1 (FETCH_FAILED);
+    - no response (both None), a non-200 status, a bad encoding or malformed JSON leave the quote ABSENT,
+      which matters only if a proposal is to be built (Q1-Q5 all FAIL, §4.11);
+    - the quote object's values are passed on as token text or NonNumeric markers for Q1-Q5."""
+    if header_raw is None and body_raw is None:
+        return {"V1_quote": "PASS", "quote": None}                    # NO_RESPONSE does not fail V1 (U113)
+    try:
+        status, fields = parse_header_artifact(header_raw)
+        enc = header_value(fields, "Content-Encoding")
+        if status != 200 or (enc is not None and enc.strip().lower() != "identity"):
+            return {"V1_quote": "PASS", "quote": None}
+        doc = parse_json_tokens(body_raw)
+    except (ValueError, TypeError, AttributeError):
+        return {"V1_quote": "PASS", "quote": None}
+    quotes = doc.get("quotes") if isinstance(doc, dict) else None
+    if not isinstance(quotes, dict):
+        return {"V1_quote": "PASS", "quote": None}
+    if set(quotes) != {SYMBOL}:
+        return {"V1_quote": "FAIL", "quote": None}                    # U95
+    q = quotes[SYMBOL]
+    if not isinstance(q, dict):
+        return {"V1_quote": "PASS", "quote": None}
+    row = {k: _numeric_or_marker(q[k]) for k in ("bp", "ap", "bs", "as") if k in q}
+    if "t" in q:
+        row["t"] = q["t"] if isinstance(q["t"], str) and not isinstance(q["t"], NumTok) else NonNumeric(q["t"])
+    return {"V1_quote": "PASS", "quote": row}
+
+
+def displayed_sizes(quote):
+    """§10.4 G8-01: {bs, as}, each the token text when the key holds a JSON number token, else None.
+    None as a whole only when no quote is available."""
+    if quote is None:
+        return None
+    return {k: (quote[k] if isinstance(quote.get(k), str) else None) for k in ("bs", "as")}
+
+
+# ------------------------------------------------------------------------- bar store and V11 (§4.9, D-6)
+def bar_tuple(b):
+    return tuple(b[f] for f in BAR_FIELDS)
+
+
+def admitted(v1v2, v):
+    """D-6: a bars response contributes observations only if V1, V2, V3, V4 and V9 all pass."""
+    return (v1v2["V1"] == "PASS" and v1v2["V2"] == "PASS"
+            and all(v["results"][c] == "PASS" for c in ("V3", "V4", "V9")))
+
+
+def fold(store, v, request_start_ns, T_d_ns):
+    """Apply one admitted cycle's observations to the store (§4.9 table). Returns the transition events.
+    `store`: dict t_ns -> {"tuple", "state", "count", "pending"}; mutated in place.
+    Event spellings (BASELINED, OBSERVED, SOURCE_REVISION, CONFIRMED, DISAPPEARED, DUPLICATE_COLLAPSED) are
+    contract v1 CONTRACT CHOICES, PROVISIONAL until v2. Order: duplicate notes in arrival order, then
+    observations in ascending t, then disappearances in ascending t (contract v1)."""
+    events = [{"t": t, "event": "DUPLICATE_COLLAPSED"} for _, t in v["duplicate_notes"]]
+    seen = set()
+    for t, b in v["completed"]:
+        seen.add(t)
+        new = bar_tuple(b)
+        cur = store.get(t)
+        if cur is None:
+            store[t] = {"tuple": new, "state": "BASELINED", "count": 1, "pending": None}
+            events.append({"t": t, "event": "BASELINED", "new": new})
+        elif cur["state"] == "PENDING":
+            if new == cur["pending"]:
+                cur.update(tuple=new, state="CONFIRMED", count=2, pending=None)
+                events.append({"t": t, "event": "CONFIRMED", "new": new})
+            else:                                                      # differs from pending (incl. A->B->A, U40)
+                events.append({"t": t, "event": "SOURCE_REVISION", "old": cur["pending"], "new": new})
+                cur["pending"] = new
+        elif new == cur["tuple"]:
+            cur["count"] += 1
+            events.append({"t": t, "event": "OBSERVED"})
+        else:
+            events.append({"t": t, "event": "SOURCE_REVISION", "old": cur["tuple"], "new": new})
+            cur.update(state="PENDING", pending=new)
+    for t in sorted(store):
+        if t not in seen and request_start_ns <= t and X.is_completed(t, T_d_ns) and store[t]["state"] != "PENDING":
+            events.append({"t": t, "event": "DISAPPEARED"})            # accepted bar absent inside the range
+    return events
+
+
+def check_V11(store, T_d_ns):
+    """V11: any PENDING bar inside the current 51-bar window [t_exp - 250 min, t_exp] -> FAIL (SOURCE_REVISION).
+    The window is the 51 grid steps themselves, whether or not every bar arrived (V8 covers absences)."""
+    t_exp = X.t_exp_ns(T_d_ns)
+    steps = {t_exp - 300 * NS * j for j in range(WINDOW)}
+    return "FAIL" if any(store.get(t, {}).get("state") == "PENDING" for t in steps) else "PASS"
+
+
+def request_start_ns(T_d_ns):
+    """§4.2: start = t_exp - 59 x 300 s."""
+    return X.t_exp_ns(T_d_ns) - 59 * 300 * NS
+
+
+# --------------------------------------------------------------------------------- V12a (§6.4 step 1, D-2)
+ALLOWLIST = ["data.alpaca.markets"]
+
+
+def boundary_check(env_names, config_bytes, client_allowlist):
+    """V12a on SUPPLIED observations (the caller reads the process environment, the config file and the client
+    object; this function reads nothing). Credential = an env name beginning APCA_ or ALPACA_ (case-insensitive),
+    or any config key other than client_allowlist. Values are never taken or recorded.
+    Returns (result, evidence, store_config_bytes). Evidence is HARNESS-ATTESTED (§11.1, U-I3)."""
+    matched = sorted(n for n in env_names if n.upper().startswith(("APCA_", "ALPACA_")))
+    config_sha = hashlib.sha256(config_bytes).hexdigest() if config_bytes is not None else None
+    ok = not matched and config_bytes is not None and list(client_allowlist) == ALLOWLIST
+    if ok:
+        try:
+            cfg = parse_json_tokens(config_bytes)
+            ok = isinstance(cfg, dict) and set(cfg) == {"client_allowlist"} and cfg["client_allowlist"] == ALLOWLIST
+        except ValueError:
+            ok = False
+    evidence = {"env_credential_names": matched, "config_sha256": config_sha,
+                "client_allowlist": list(client_allowlist)}
+    return ("PASS" if ok else "FAIL"), evidence, ok                    # config bytes stored only on PASS

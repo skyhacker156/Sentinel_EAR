@@ -1,4 +1,4 @@
-"""Strike 1b-pre tests: V3-V10 (§4.7), Q1-Q5 (§4.11), V12b (§5.6). V1, V2, V11, V12a deferred to the freeze."""
+"""Strike 1b tests: V3-V10 (§4.7), Q1-Q5 (§4.11), V12b (§5.6). V1, V2, V11, V12a: see test_cycle_r42i.py."""
 import os
 import sys
 import unittest
@@ -28,7 +28,7 @@ class BarValidation(unittest.TestCase):
         self.assertIsNone(v["first_failure"], v["results"])
         self.assertTrue(all(r == "PASS" for r in v["results"].values()))
         self.assertEqual(len(V.window_closes(v)), 51)
-        self.assertEqual(v["deferred"], ["V1", "V2", "V11", "V12a"])
+        self.assertEqual(v["evaluated_elsewhere"], ["V1", "V2", "V11", "V12a"])   # freeze update (R4.2i)
 
     def test_U17_forming_bar_excluded_and_recorded(self):
         v = run(FX.bars())

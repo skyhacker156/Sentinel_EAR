@@ -1,5 +1,7 @@
-"""Strike 1b-pre tests: proposal construction (§7.2, §8.1.1), policy predicates (§7.3 minus R3), shadow ledger
+"""Strike 1b tests (R4.2i frozen, FD-5 v2): proposal construction (§7.2, §8.1.1), policy P-0.2 (§7.3), shadow ledger
 (§8.1), disposition (§7.1 step 5) and the integrated fixture path (§6.4 steps 5-7).
+FREEZE UPDATE (R4.2i, 5ec5d1b): cases that expected PendingFreeze (R3, EXIT applicability, SHADOW_EXPIRED) now
+assert the frozen R4.2i outcome. Each such change is marked "freeze update"; no expected FAIL was removed.
 
 Three kinds of case are kept apart, as the dispatch requires:
   PATH : normal construction from fixture inputs through the integrated path;
@@ -35,10 +37,10 @@ def failing(rules):
 
 
 class IntegratedPath(unittest.TestCase):
-    def test_PATH_valid_BUY_constructed_all_rules_pass_disposition_awaits_freeze(self):
-        with self.assertRaises(D.PendingFreeze):
-            path("5")
-        # Re-run the steps to inspect the proposal (the integrated call raised at disposition).
+    def test_PATH_valid_BUY_SHADOW_EXPIRED_reserve_then_release(self):
+        out = path("5")                                               # freeze update: was PendingFreeze
+        self.assertEqual((out["terminal"], out["failing"]), ("SHADOW_EXPIRED", []))
+        self.assertEqual(out["reserved"]["usd"], out["proposal"]["R"])  # reserved at (a) only on all-pass
         val = V.validate_bars(FX.bars("5"), FX.T_D)
         sig = D.decide_signal(V.window_closes(val))
         self.assertEqual((sig["D_prev"], sig["D_k"], sig["signal"]), (0, F(15), D.BUY))
@@ -48,10 +50,10 @@ class IntegratedPath(unittest.TestCase):
         q = X.floor_to(F(150) / (L * F("1.0025")), F("0.0001"))
         self.assertEqual((p["L"], p["q"], p["R"]), (L, q, X.ceil_cent(q * L * F("1.0025"))))
         self.assertEqual(p["q"], F("0.0016"))
-        rules = D.evaluate_buy(p, qv, C, FX.T_D, D.ShadowLedger())
+        rules = D.evaluate(p, qv, C, FX.T_D, D.ShadowLedger())
         self.assertEqual(failing(rules), [])
-        self.assertEqual(rules["R3"], D.PENDING_FREEZE)
-        self.assertEqual(set(rules), set(D.BUY_RULES))                # complete applicable set returned
+        self.assertEqual(rules["R3"], "PASS")                         # freeze update: R3 now evaluated
+        self.assertEqual(list(rules), D.BUY_RULES)                    # complete applicable set, numeric order
 
     def test_PATH_HOLD(self):
         out = path("0")
@@ -69,7 +71,7 @@ class IntegratedPath(unittest.TestCase):
     def test_PATH_U8b_stale_quote_REJECTED_R4(self):
         out = path("5", quote=FX.quote(t_ns=C - 16 * NS))
         self.assertEqual((out["terminal"], out["failing"]), ("REJECTED", ["R4"]))
-        self.assertFalse(out["failing_set_complete"])                 # R3 still pending
+        self.assertNotIn("reserved", out)                             # no reservation when a rule fails
 
     def test_PATH_U81_insufficient_quantity_REJECTED_R10(self):
         out = path("5", base="2000000", quote=FX.quote("2000004", "2000005", t_ns=C - 2 * NS))
@@ -83,8 +85,8 @@ class IntegratedPath(unittest.TestCase):
 
     def test_PATH_U45_cutoff_inclusive_passes(self):
         created = FX.T_D + 30 * NS
-        with self.assertRaises(D.PendingFreeze):                      # all evaluated rules pass
-            path("5", created=created, quote=FX.quote(t_ns=created - 2 * NS))
+        out = path("5", created=created, quote=FX.quote(t_ns=created - 2 * NS))   # freeze update
+        self.assertEqual(out["terminal"], "SHADOW_EXPIRED")
 
     def test_PATH_U47_created_late_REJECTED_R13(self):
         created = FX.T_D + 250 * NS
@@ -133,7 +135,7 @@ def buy(ledger=None, **override):
     ledger = ledger or D.ShadowLedger()
     p = D.construct("BUY", QV["bid"], QV["ask"], ledger)
     p.update(override)
-    return p, D.evaluate_buy(p, QV, C, FX.T_D, ledger)
+    return p, D.evaluate(p, QV, C, FX.T_D, ledger)
 
 
 class Policy(unittest.TestCase):
@@ -141,7 +143,7 @@ class Policy(unittest.TestCase):
         qv = {"bid": F(90000), "ask": F(92000), "t": C - 2 * NS}
         lg = D.ShadowLedger()
         p = D.construct("BUY", qv["bid"], qv["ask"], lg)
-        self.assertEqual(failing(D.evaluate_buy(p, qv, C, FX.T_D, lg)), ["R5"])
+        self.assertEqual(failing(D.evaluate(p, qv, C, FX.T_D, lg)), ["R5"])
 
     def test_INJ_R12_equity_below_450(self):
         self.assertEqual(failing(buy(D.ShadowLedger(cash=F("400.00")))[1]), ["R12"])
@@ -157,7 +159,7 @@ class Policy(unittest.TestCase):
         qv = {"bid": F(4000000), "ask": F(4000000), "t": C - 2 * NS}
         lg = D.ShadowLedger(btc=F("0.00009"))
         p = D.construct("BUY", qv["bid"], qv["ask"], lg)
-        self.assertEqual(failing(D.evaluate_buy(p, qv, C, FX.T_D, lg)), ["R8", "R10"])
+        self.assertEqual(failing(D.evaluate(p, qv, C, FX.T_D, lg)), ["R8", "R10"])
 
     def test_EVAL_X4_R7_R_150_01(self):
         self.assertEqual(failing(buy(R=F("150.01"))[1]), ["R7"])
@@ -167,7 +169,7 @@ class Policy(unittest.TestCase):
         lg.reserved_usd = F(400)                                     # constructed state, test only
         p = D.construct("BUY", QV["bid"], QV["ask"], lg)
         p["R"] = F(120)
-        self.assertEqual(failing(D.evaluate_buy(p, QV, C, FX.T_D, lg)), ["R6"])
+        self.assertEqual(failing(D.evaluate(p, QV, C, FX.T_D, lg)), ["R6"])
 
     def test_EVAL_X2_R1_unsupported_instrument(self):
         self.assertEqual(failing(buy(instrument="ETH/USD")[1]), ["R1"])
@@ -178,17 +180,33 @@ class Policy(unittest.TestCase):
     def test_EVAL_R11_R16_open_authorization(self):
         self.assertEqual(failing(buy(D.ShadowLedger(open_or_unresolved=True))[1]), ["R11", "R16"])
 
-    def test_EVAL_R9_R15_predicates_only(self):
-        # EXIT applicability is new R4.2g text: only the predicates are tested now.
+    def test_EVAL_EXIT_rules_X6_R9_R15(self):
+        # freeze update: EXIT applicability is now frozen (R4.2i §8.1.1): R6, R7, R8, R12 do not apply.
         lg = D.ShadowLedger(btc=F("0.01"))
         p = D.construct("EXIT", QV["bid"], QV["ask"], lg)
         self.assertEqual((p["L"], p["q"]), (F(90005), F("0.01")))      # bid rounded UP; q_exit = held
-        pred = D.rule_predicates(dict(p, q=F("0.02")), QV, C, FX.T_D, lg)
-        self.assertFalse(pred["R9"])
-        self.assertFalse(D.rule_predicates(D.construct("EXIT", QV["bid"], QV["ask"], D.ShadowLedger()),
-                                           QV, C, FX.T_D, D.ShadowLedger())["R15"])
-        with self.assertRaises(D.PendingFreeze):
-            D.evaluate_buy(p, QV, C, FX.T_D, lg)
+        self.assertNotIn("R", p)                                       # EXIT has no R
+        rules = D.evaluate(p, QV, C, FX.T_D, lg)
+        self.assertEqual(list(rules), D.EXIT_RULES)
+        self.assertEqual(failing(rules), [])                           # normal EXIT while long passes
+        self.assertEqual(failing(D.evaluate(dict(p, q=F("0.02")), QV, C, FX.T_D, lg)), ["R9"])   # X6
+        flat = D.ShadowLedger()
+        pf = D.construct("EXIT", QV["bid"], QV["ask"], flat)
+        self.assertEqual(failing(D.evaluate(pf, QV, C, FX.T_D, flat)), ["R10", "R15"])        # U121, G6-02
+
+    def test_EVAL_X1_R3_malformed_proposal(self):
+        # correction (run 5): exact failing sets; a malformed field fails R3 and every rule that reads it.
+        p, _ = buy()
+        cases = [({k: v for k, v in p.items() if k != "rounding_inputs"}, ["R3"]),       # U121 R3 case
+                 (dict(p, L="90004"), ["R3", "R5", "R10"]),                           # L of the wrong type
+                 ({k: v for k, v in p.items() if k != "R"}, ["R3", "R6", "R7", "R8"]),  # BUY without R
+                 (dict(p, side="SELL"), ["R3", "R9", "R15"])]   # correction (run 6): every rule evaluated
+        for broken, want in cases:
+            with self.subTest(want=want):
+                self.assertEqual(failing(D.evaluate(broken, QV, C, FX.T_D, D.ShadowLedger())), want)
+
+    def test_EVAL_R3_q_zero_is_schema_valid(self):
+        self.assertEqual(failing(buy(q=F(0), R=F(0))[1]), ["R10"])      # value bounds are R10's, not R3's
 
     def test_U28_freshness_boundaries(self):
         lg = D.ShadowLedger()
@@ -196,7 +214,7 @@ class Policy(unittest.TestCase):
             with self.subTest(age_ns=C - qt):
                 qv = dict(QV, t=qt)
                 p = D.construct("BUY", qv["bid"], qv["ask"], lg)
-                self.assertEqual(D.evaluate_buy(p, qv, C, FX.T_D, lg)["R4"], want)
+                self.assertEqual(D.evaluate(p, qv, C, FX.T_D, lg)["R4"], want)
 
     def test_U33_budget_divisible_and_one_cent_short(self):
         L, f = F(60000), F("1.0025")
@@ -244,10 +262,9 @@ class Ledger(unittest.TestCase):
             D.ShadowLedger(cash=F("500.001"))
 
     def test_DISPOSITION_rules(self):
-        self.assertEqual(D.disposition({"R1": "FAIL", "R3": D.PENDING_FREEZE, "R4": "FAIL"})["failing"],
-                         ["R1", "R4"])
-        with self.assertRaises(D.PendingFreeze):
-            D.disposition({"R1": "PASS", "R3": D.PENDING_FREEZE})
+        self.assertEqual(D.disposition({"R1": "FAIL", "R3": "PASS", "R4": "FAIL"}),
+                         {"terminal": "REJECTED", "failing": ["R1", "R4"]})
+        self.assertEqual(D.disposition({"R1": "PASS", "R3": "PASS"}), {"terminal": "SHADOW_EXPIRED", "failing": []})
 
 
 if __name__ == "__main__":

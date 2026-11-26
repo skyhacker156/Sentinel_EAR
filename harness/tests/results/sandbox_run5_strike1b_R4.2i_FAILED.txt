@@ -1,0 +1,124 @@
+RUN 5 (sandbox, Linux, Python 3.12.3), Strike 1b completion first run (R4.2i)
+test_EC3_EC4 (test_decide.Crossover.test_EC3_EC4) ... ok
+test_FD2_exhaustive_and_exclusive_on_sign_grid (test_decide.Crossover.test_FD2_exhaustive_and_exclusive_on_sign_grid) ... ok
+test_U1_minus4_to_minus1_hold (test_decide.Crossover.test_U1_minus4_to_minus1_hold) ... ok
+test_U2_minus3_to_plus2_buy (test_decide.Crossover.test_U2_minus3_to_plus2_buy) ... ok
+test_U3_plus3_to_minus2_exit (test_decide.Crossover.test_U3_plus3_to_minus2_exit) ... ok
+test_U4a_minus1_to_0_hold (test_decide.Crossover.test_U4a_minus1_to_0_hold) ... ok
+test_U4b_0_to_plus1_buy (test_decide.Crossover.test_U4b_0_to_plus1_buy) ... ok
+test_U4c_plus1_0_plus1_buy_at_third_step (test_decide.Crossover.test_U4c_plus1_0_plus1_buy_at_third_step) ... ok
+test_U4d_minus1_0_minus1_exit_at_third_step (test_decide.Crossover.test_U4d_minus1_0_minus1_exit_at_third_step) ... ok
+test_U10_identical_across_runs_processes_locale_timezone (test_decide.Determinism.test_U10_identical_across_runs_processes_locale_timezone) ... ok
+test_EXACT_end_to_end_signals (test_decide.Indicators.test_EXACT_end_to_end_signals) ... ok
+test_EXACT_indicator_values (test_decide.Indicators.test_EXACT_indicator_values) ... ok
+test_U11_history_precondition (test_decide.Indicators.test_U11_history_precondition) ... ok
+test_U18_quote_independence (test_decide.Indicators.test_U18_quote_independence) ... ok
+test_U4e_exact_equality_where_binary_arithmetic_differs (test_decide.Indicators.test_U4e_exact_equality_where_binary_arithmetic_differs) ... ok
+test_EXACT_mapping_table (test_decide.Mapping.test_EXACT_mapping_table) ... ok
+test_U14_flat_boundary (test_decide.Mapping.test_U14_flat_boundary) ... ok
+test_PATH_BUY_while_long_NO_ACTION_fixture_ledger (test_decision_path.IntegratedPath.test_PATH_BUY_while_long_NO_ACTION_fixture_ledger) ... ok
+test_PATH_EXIT_while_flat_NO_ACTION (test_decision_path.IntegratedPath.test_PATH_EXIT_while_flat_NO_ACTION) ... ok
+test_PATH_HOLD (test_decision_path.IntegratedPath.test_PATH_HOLD) ... ok
+test_PATH_U18_quote_does_not_change_signal (test_decision_path.IntegratedPath.test_PATH_U18_quote_does_not_change_signal) ... ok
+test_PATH_U45_cutoff_inclusive_passes (test_decision_path.IntegratedPath.test_PATH_U45_cutoff_inclusive_passes) ... ok
+test_PATH_U46_authorization_window_REJECTED_R13 (test_decision_path.IntegratedPath.test_PATH_U46_authorization_window_REJECTED_R13) ... ok
+test_PATH_U47_created_late_REJECTED_R13 (test_decision_path.IntegratedPath.test_PATH_U47_created_late_REJECTED_R13) ... ok
+test_PATH_U80_invalid_quote_on_BUY_NO_DECISION_QUOTE_INVALID (test_decision_path.IntegratedPath.test_PATH_U80_invalid_quote_on_BUY_NO_DECISION_QUOTE_INVALID) ... ok
+test_PATH_U80_stale_but_valid_quote_REJECTED_not_QUOTE_INVALID (test_decision_path.IntegratedPath.test_PATH_U80_stale_but_valid_quote_REJECTED_not_QUOTE_INVALID) ... ok
+test_PATH_U81_insufficient_quantity_REJECTED_R10 (test_decision_path.IntegratedPath.test_PATH_U81_insufficient_quantity_REJECTED_R10) ... ok
+test_PATH_U8b_stale_quote_REJECTED_R4 (test_decision_path.IntegratedPath.test_PATH_U8b_stale_quote_REJECTED_R4) ... ok
+test_PATH_invalid_data_NO_DECISION (test_decision_path.IntegratedPath.test_PATH_invalid_data_NO_DECISION) ... ok
+test_PATH_quote_not_validated_on_HOLD (test_decision_path.IntegratedPath.test_PATH_quote_not_validated_on_HOLD) ... ok
+test_PATH_valid_BUY_SHADOW_EXPIRED_reserve_then_release (test_decision_path.IntegratedPath.test_PATH_valid_BUY_SHADOW_EXPIRED_reserve_then_release) ... ok
+test_DISPOSITION_rules (test_decision_path.Ledger.test_DISPOSITION_rules) ... ok
+test_LEDGER_cash_on_cent_grid (test_decision_path.Ledger.test_LEDGER_cash_on_cent_grid) ... ok
+test_LEDGER_no_fill_path_cash_and_btc_never_change (test_decision_path.Ledger.test_LEDGER_no_fill_path_cash_and_btc_never_change) ... ok
+test_LEDGER_reservation_lifecycle_same_cycle (test_decision_path.Ledger.test_LEDGER_reservation_lifecycle_same_cycle) ... ok
+test_DERIVED_R_le_budget_by_construction (test_decision_path.Policy.test_DERIVED_R_le_budget_by_construction) ... ok
+test_EVAL_EXIT_rules_X6_R9_R15 (test_decision_path.Policy.test_EVAL_EXIT_rules_X6_R9_R15) ... ok
+test_EVAL_R11_R16_open_authorization (test_decision_path.Policy.test_EVAL_R11_R16_open_authorization) ... ok
+test_EVAL_R2_not_limit (test_decision_path.Policy.test_EVAL_R2_not_limit) ... ok
+test_EVAL_R3_q_zero_is_schema_valid (test_decision_path.Policy.test_EVAL_R3_q_zero_is_schema_valid) ... ok
+test_EVAL_R6_R_above_cash_available (test_decision_path.Policy.test_EVAL_R6_R_above_cash_available) ... ok
+test_EVAL_R8_exposure_limit_BUY_with_long_ledger (test_decision_path.Policy.test_EVAL_R8_exposure_limit_BUY_with_long_ledger) ... ok
+test_EVAL_R8_with_R10_flat_G6_03 (test_decision_path.Policy.test_EVAL_R8_with_R10_flat_G6_03) ... ok
+test_EVAL_X1_R3_malformed_proposal (test_decision_path.Policy.test_EVAL_X1_R3_malformed_proposal) ... 
+  test_EVAL_X1_R3_malformed_proposal (test_decision_path.Policy.test_EVAL_X1_R3_malformed_proposal) (keys=['L', 'R', 'instrument', 'order_type', 'q', 'rounding_inputs', 'side']) ... ERROR
+test_EVAL_X2_R1_unsupported_instrument (test_decision_path.Policy.test_EVAL_X2_R1_unsupported_instrument) ... ok
+test_EVAL_X4_R7_R_150_01 (test_decision_path.Policy.test_EVAL_X4_R7_R_150_01) ... ok
+test_EVAL_X5_R12_equity_449 (test_decision_path.Policy.test_EVAL_X5_R12_equity_449) ... ok
+test_INJ_R12_equity_below_450 (test_decision_path.Policy.test_INJ_R12_equity_below_450) ... ok
+test_INJ_R5_limit_far_from_mid (test_decision_path.Policy.test_INJ_R5_limit_far_from_mid) ... ok
+test_U28_freshness_boundaries (test_decision_path.Policy.test_U28_freshness_boundaries) ... ok
+test_U33_budget_divisible_and_one_cent_short (test_decision_path.Policy.test_U33_budget_divisible_and_one_cent_short) ... ok
+test_U82_cash_available_below_150 (test_decision_path.Policy.test_U82_cash_available_below_150) ... ok
+test_U17_bar_past_settle_is_excluded (test_exact.CompletedCandles.test_U17_bar_past_settle_is_excluded) ... ok
+test_U5_late_invocation_keeps_slot_and_rule (test_exact.CompletedCandles.test_U5_late_invocation_keeps_slot_and_rule) ... ok
+test_U78_boundary_inclusive_then_one_ns_earlier (test_exact.CompletedCandles.test_U78_boundary_inclusive_then_one_ns_earlier) ... ok
+test_U89_end_labelled_bars_never_used_before_close (test_exact.CompletedCandles.test_U89_end_labelled_bars_never_used_before_close) ... ok
+test_TIME_rfc3339_exact (test_exact.Instants.test_TIME_rfc3339_exact) ... ok
+test_TIME_rfc3339_malformed (test_exact.Instants.test_TIME_rfc3339_malformed) ... ok
+test_EXACT_valid_tokens (test_exact.NumberTokens.test_EXACT_valid_tokens) ... ok
+test_U24_zero_volume_by_exact_value (test_exact.NumberTokens.test_U24_zero_volume_by_exact_value) ... ok
+test_U25_exact_sums_where_binary_sums_differ (test_exact.NumberTokens.test_U25_exact_sums_where_binary_sums_differ) ... ok
+test_U87_long_mantissa_and_extreme_exponents_are_exact (test_exact.NumberTokens.test_U87_long_mantissa_and_extreme_exponents_are_exact) ... ok
+test_U87_malformed_tokens (test_exact.NumberTokens.test_U87_malformed_tokens) ... ok
+test_EXACT_ceil_cent (test_exact.RoundingPoints.test_EXACT_ceil_cent) ... ok
+test_EXACT_decimal_string_refuses_non_terminating (test_exact.RoundingPoints.test_EXACT_decimal_string_refuses_non_terminating) ... ok
+test_EXACT_display_8dp_round_half_even (test_exact.RoundingPoints.test_EXACT_display_8dp_round_half_even) ... ok
+test_EXACT_floor_q_to_quantity_increment (test_exact.RoundingPoints.test_EXACT_floor_q_to_quantity_increment) ... ok
+test_EXACT_limit_conservative_rounding (test_exact.RoundingPoints.test_EXACT_limit_conservative_rounding) ... ok
+test_TIME_off_run_and_grid (test_exact.SlotIdentity.test_TIME_off_run_and_grid) ... ok
+test_U52_invocation_exactly_at_next_T_d (test_exact.SlotIdentity.test_U52_invocation_exactly_at_next_T_d) ... ok
+test_U53_cutoff_boundaries (test_exact.SlotIdentity.test_U53_cutoff_boundaries) ... ok
+test_U53_property_slot_anchored_clocks (test_exact.SlotIdentity.test_U53_property_slot_anchored_clocks) ... ok
+test_U87_no_float_literal_or_call (test_purity.Purity.test_U87_no_float_literal_or_call) ... ok
+test_U87_no_true_division_by_or_of_an_int_literal (test_purity.Purity.test_U87_no_true_division_by_or_of_an_int_literal) ... ok
+test_X10_no_order_vocabulary_in_package (test_purity.Purity.test_X10_no_order_vocabulary_in_package) ... ok
+test_boundary_no_forbidden_imports (test_purity.Purity.test_boundary_no_forbidden_imports) ... ok
+test_U111c_non_short_circuit_all_failures_recorded (test_validate.BarValidation.test_U111c_non_short_circuit_all_failures_recorded) ... ok
+test_U11_CONFLICT_50_bars_first_failure_is_V8_not_V10 (test_validate.BarValidation.test_U11_CONFLICT_50_bars_first_failure_is_V8_not_V10) ... ok
+test_U12_reverse_order_sorted_same_result (test_validate.BarValidation.test_U12_reverse_order_sorted_same_result) ... ok
+test_U17_forming_bar_excluded_and_recorded (test_validate.BarValidation.test_U17_forming_bar_excluded_and_recorded) ... ok
+test_U24_zero_volume_bar_retained_in_window (test_validate.BarValidation.test_U24_zero_volume_bar_retained_in_window) ... ok
+test_U6_one_bar_absent_in_window_DATA_GAP (test_validate.BarValidation.test_U6_one_bar_absent_in_window_DATA_GAP) ... ok
+test_U7a_identical_duplicate_collapses_with_note (test_validate.BarValidation.test_U7a_identical_duplicate_collapses_with_note) ... ok
+test_U7b_differing_duplicate_DATA_CONFLICT (test_validate.BarValidation.test_U7b_differing_duplicate_DATA_CONFLICT) ... ok
+test_U85_token_text_difference_is_a_difference (test_validate.BarValidation.test_U85_token_text_difference_is_a_difference) ... ok
+test_U8a_newest_completed_10_min_old_STALE_SERIES (test_validate.BarValidation.test_U8a_newest_completed_10_min_old_STALE_SERIES) ... ok
+test_V3_offgrid_and_unparseable_t_MALFORMED (test_validate.BarValidation.test_V3_offgrid_and_unparseable_t_MALFORMED) ... ok
+test_V9_accepts_exponent_and_zero_volume (test_validate.BarValidation.test_V9_accepts_exponent_and_zero_volume) ... ok
+test_V9_numeric_validity_MALFORMED (test_validate.BarValidation.test_V9_numeric_validity_MALFORMED) ... ok
+test_VALID_51_bars_all_pass_and_window (test_validate.BarValidation.test_VALID_51_bars_all_pass_and_window) ... ok
+test_window_refused_on_failure (test_validate.BarValidation.test_window_refused_on_failure) ... ok
+test_U79_theta_boundaries (test_validate.ClockCheck.test_U79_theta_boundaries) ... ok
+test_V12b_conditions_1_to_3 (test_validate.ClockCheck.test_V12b_conditions_1_to_3) ... ok
+test_V12b_probe_date_parses (test_validate.ClockCheck.test_V12b_probe_date_parses) ... ok
+test_FIXTURE_iso_round_trip (test_validate.FixtureSanity.test_FIXTURE_iso_round_trip) ... ok
+test_U80_each_Q_check_failing (test_validate.QuoteValidation.test_U80_each_Q_check_failing) ... ok
+test_U80_missing_or_malformed_fields_and_absent_quote (test_validate.QuoteValidation.test_U80_missing_or_malformed_fields_and_absent_quote) ... ok
+
+======================================================================
+ERROR: test_EVAL_X1_R3_malformed_proposal (test_decision_path.Policy.test_EVAL_X1_R3_malformed_proposal) (keys=['L', 'R', 'instrument', 'order_type', 'q', 'rounding_inputs', 'side'])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/claude/hb/harness/tests/test_decision_path.py", line 202, in test_EVAL_X1_R3_malformed_proposal
+    self.assertEqual(failing(D.evaluate(broken, QV, C, FX.T_D, D.ShadowLedger())), ["R3"]
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/claude/hb/harness/tests/../sl_pt_001/decide.py", line 210, in evaluate
+    pred = rule_predicates(p, quote, created_ns, T_d_ns, ledger, policy)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/claude/hb/harness/tests/../sl_pt_001/decide.py", line 192, in rule_predicates
+    "R5": abs(L - mid) <= policy["R5_band"] * mid,
+              ~~^~~~~
+TypeError: unsupported operand type(s) for -: 'str' and 'Fraction'
+
+----------------------------------------------------------------------
+Ran 97 tests in 0.547s
+
+FAILED (errors=1)
+
+[U10] cross-process digest: a7a178f2cea94a004852798f2e5c03fe7cf410f1c1adf005d1eb6a1d1701e19a
+
+[U53] property seed recorded: 20261126
+Exit code: 1

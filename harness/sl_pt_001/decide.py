@@ -82,22 +82,14 @@ def decide_signal(closes):
     return out
 
 
+
 # ======================================================================================================
-# Strike 1b-pre: proposal construction, policy predicates, Stage A shadow ledger, disposition.
-# Governing text, unchanged row by row between frozen R4.2c and candidate R4.2g (COMPUTED):
-#   §7.1, §7.2, §7.3 rows R1, R2, R4-R16 (not R3), §8.1, §8.1.1 rows (not the inserted EXIT-applicability row),
-#   §3.3, §5.3, §5.4 rows used here (freshness, cutoff), §11.1 rows HOLD / NO_ACTION / REJECTED.
-# DEFERRED to the amended freeze: R3 (redefined in R4.2g), the EXIT rule-applicability set (new row in
-#   §8.1.1), and the SHADOW_EXPIRED condition (§11.1 row changed). Policy values: §7.3 and §7.4 text.
+# Strike 1b: proposal construction, policy P-0.2, Stage A shadow ledger, disposition, full cycle.
+# Governing text: frozen R4.2i (freeze 5ec5d1b), FD-5 v2. §6.4 steps 1-7, §7.1-7.3, §8.1, §8.1.1, §11.1.
+# Commit timing (lock_clock_at, the ceiling wait) and TER serialization are Strike 2/3, not here.
 # ======================================================================================================
 from . import exact as X  # noqa: E402
-
-PENDING_FREEZE = "PENDING_FREEZE"
-
-
-class PendingFreeze(Exception):
-    """A disposition that needs requirements not yet frozen (R3; EXIT applicability; SHADOW_EXPIRED)."""
-
+from . import validate as V  # noqa: E402
 
 POLICY = {                                     # §7.3, §7.4, §8.1.1; increments DOCUMENTED, status UNVERIFIED
     "instrument": "BTC/USD",
@@ -106,9 +98,10 @@ POLICY = {                                     # §7.3, §7.4, §8.1.1; incremen
     "R5_band": Fraction(1, 100), "R7_cap": Fraction(150), "R8_cap": Fraction(300), "R12_floor": Fraction(450),
 }
 
-# BUY applicability DERIVED from unchanged rule rows: R9 (q_exit) and R15 (EXIT only while long) are EXIT
-# rules by content; R12 says "reject BUY"; R14 is Stage B. R3 is applicable but deferred (redefined).
+# Applicability: R9 and R15 apply to EXIT only; R6, R7, R8 and R12 do not apply to EXIT (§8.1.1 R4.2i row);
+# R14 is Stage B. Lists are in numeric rule order.
 BUY_RULES = ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R10", "R11", "R12", "R13", "R16"]
+EXIT_RULES = ["R1", "R2", "R3", "R4", "R5", "R9", "R10", "R11", "R13", "R15", "R16"]
 
 
 class ShadowLedger:
@@ -144,7 +137,7 @@ class ShadowLedger:
 def construct(side, bid, ask, ledger, policy=POLICY):
     """§7.1 step 3 with §7.2 and §8.1.1. BUY: L = ask rounded down; budget = min($150, cash_available);
     q = floor_qty(budget / (L (1 + f_res))); R = ceil_cent(q L (1 + f_res)). EXIT: L = bid rounded up;
-    q_exit = floor_qty(shadow BTC - shadow_reserved_btc). No repricing or resizing afterwards (§7.2)."""
+    q_exit = floor_qty(shadow BTC - shadow_reserved_btc); no R and no budget (§8.1.1 R4.2i row)."""
     L = X.round_limit(Fraction(ask) if side == "BUY" else Fraction(bid), side, policy["price_increment"])
     p = {"instrument": policy["instrument"], "side": side, "order_type": "LIMIT", "L": L,
          "rounding_inputs": {"bid": Fraction(bid), "ask": Fraction(ask),
@@ -171,55 +164,102 @@ def _on_grid(x, inc):
     return (Fraction(x) / inc).denominator == 1
 
 
+def schema_valid(p):
+    """R3 (R4.2i): every field present with its type. Value bounds belong to R4-R13 (q = 0 is schema-valid)."""
+    side = p.get("side")
+    if side not in ("BUY", "EXIT"):
+        return False
+    need = {"instrument": str, "side": str, "order_type": str, "L": Fraction, "q": Fraction, "rounding_inputs": dict}
+    if side == "BUY":
+        need["R"] = Fraction
+    if any(not isinstance(p.get(k), t) for k, t in need.items()):
+        return False
+    return side == "BUY" or "R" not in p
+
+
 def rule_predicates(p, quote, created_ns, T_d_ns, ledger, policy=POLICY):
-    """Every rule predicate whose §7.3 row is unchanged (all but R3). True = PASS.
-    `quote` holds exact bid, ask and t of the checkpoint-(a) quote (validate.quote_values)."""
+    """Every Stage A rule predicate (§7.3). True = PASS. `quote`: exact bid, ask, t of the checkpoint-(a) quote.
+    Fail-closed (correction, run 5): a predicate whose input is missing or of the wrong type is FAIL, never an
+    exception, so a malformed proposal is REJECTED with R3 (and any rule that reads the malformed field)."""
     bid, ask, qt = quote["bid"], quote["ask"], quote["t"]
     mid = (bid + ask) * Fraction(1, 2)
-    R = p.get("R", Fraction(0))
-    return {
-        "R1": p["instrument"] == policy["instrument"],
-        "R2": p["order_type"] == "LIMIT",                              # Stage A part of R2 (§7.3: "A: limit")
-        "R4": 0 <= created_ns - qt <= policy["freshness_s"] * X.NS,    # §5.4: a quote dated after c fails
-        "R5": abs(p["L"] - mid) <= policy["R5_band"] * mid,
-        "R6": R <= ledger.cash_available,
-        "R7": R <= policy["R7_cap"],
-        "R8": ledger.btc * bid + R <= policy["R8_cap"],
-        "R9": p["q"] <= ledger.btc - ledger.reserved_btc,
-        "R10": p["q"] >= policy["min_order_size"] and _on_grid(p["q"], policy["qty_increment"])
-               and _on_grid(p["L"], policy["price_increment"]),
-        "R11": not ledger.open_or_unresolved,
-        "R12": not (ledger.cash + ledger.btc * bid < policy["R12_floor"]),
-        "R13": X.cutoff_passed(T_d_ns, created_ns, policy["W_s"]),
-        "R15": not (ledger.btc < policy["min_order_size"]),            # EXIT only while long
-        "R16": not ledger.open_or_unresolved,                          # FD-3
+
+    def num(k):
+        v = p[k]
+        if not isinstance(v, Fraction):
+            raise TypeError(k)
+        return v
+
+    preds = {
+        "R1": lambda: p["instrument"] == policy["instrument"],
+        "R2": lambda: p["order_type"] == "LIMIT",                      # Stage A part of R2 (§7.3, §11.6)
+        "R3": lambda: schema_valid(p),
+        "R4": lambda: 0 <= created_ns - qt <= policy["freshness_s"] * X.NS,   # §5.4: a quote dated after c fails
+        "R5": lambda: abs(num("L") - mid) <= policy["R5_band"] * mid,
+        "R6": lambda: num("R") <= ledger.cash_available,
+        "R7": lambda: num("R") <= policy["R7_cap"],
+        "R8": lambda: ledger.btc * bid + num("R") <= policy["R8_cap"],
+        "R9": lambda: num("q") <= ledger.btc - ledger.reserved_btc,
+        "R10": lambda: (num("q") >= policy["min_order_size"] and _on_grid(num("q"), policy["qty_increment"])
+                        and _on_grid(num("L"), policy["price_increment"])),
+        "R11": lambda: not ledger.open_or_unresolved,
+        "R12": lambda: not (ledger.cash + ledger.btc * bid < policy["R12_floor"]),
+        "R13": lambda: X.cutoff_passed(T_d_ns, created_ns, policy["W_s"]),
+        "R15": lambda: not (ledger.btc < policy["min_order_size"]),    # EXIT only while long
+        "R16": lambda: not ledger.open_or_unresolved,                  # FD-3
     }
+    out = {}
+    for r, f in preds.items():
+        try:
+            out[r] = bool(f())
+        except (KeyError, TypeError, ValueError, ZeroDivisionError):
+            out[r] = False
+    return out
 
 
-def evaluate_buy(p, quote, created_ns, T_d_ns, ledger, policy=POLICY):
-    """§7.1 step 4 for a BUY: EVERY applicable rule evaluated and recorded (not the first rejection).
-    R3 is reported as PENDING_FREEZE."""
-    if p["side"] != "BUY":
-        raise PendingFreeze("EXIT rule applicability is new text in R4.2g (§8.1.1); evaluated after the freeze")
+def evaluate(p, quote, created_ns, T_d_ns, ledger, policy=POLICY):
+    """§7.1 step 4: EVERY applicable rule for the proposal's side, each recorded with its code."""
+    side = p.get("side")
+    if side == "BUY":
+        rules = BUY_RULES
+    elif side == "EXIT":
+        rules = EXIT_RULES
+    else:                                    # invalid side (R3 fails): evaluate every Stage A rule, skip none
+        rules = sorted(set(BUY_RULES) | set(EXIT_RULES), key=lambda c: int(c[1:]))
     pred = rule_predicates(p, quote, created_ns, T_d_ns, ledger, policy)
-    return {r: (PENDING_FREEZE if r == "R3" else ("PASS" if pred[r] else "FAIL")) for r in BUY_RULES}
+    return {r: ("PASS" if pred[r] else "FAIL") for r in rules}
 
 
 def disposition(rule_results):
-    """§7.1 step 5: any FAIL -> REJECTED (all failing codes); all PASS -> SHADOW_EXPIRED at the ceiling.
-    REJECTED needs only one FAIL, so it is decidable now (the failing set may still gain R3 after the freeze).
-    An all-pass result needs R3 and the amended SHADOW_EXPIRED condition: PendingFreeze."""
+    """§7.1 step 5: any FAIL -> REJECTED with all failing codes; all PASS -> SHADOW_EXPIRED (Stage A).
+    The commit of SHADOW_EXPIRED happens at the ceiling (lock_clock_at >= ceiling): that timing is Strike 3."""
     failing = [r for r, v in rule_results.items() if v == "FAIL"]
     if failing:
-        return {"terminal": "REJECTED", "failing": failing,
-                "failing_set_complete": PENDING_FREEZE not in rule_results.values()}
-    raise PendingFreeze("all evaluated rules pass; R3 and the SHADOW_EXPIRED condition await the freeze")
+        return {"terminal": "REJECTED", "failing": failing}
+    return {"terminal": "SHADOW_EXPIRED", "failing": []}
+
+
+def _propose(out, signal, quote_tokens, quote_checks, created_ns, T_d_ns, ledger, policy):
+    out["Q"] = quote_checks
+    if any(v == "FAIL" for v in quote_checks.values()):
+        out["terminal"] = "NO_DECISION (QUOTE_INVALID)"
+        return out
+    qv = V.quote_values(quote_tokens)
+    out["created"] = created_ns                                        # checkpoint (a), §5.3
+    p = construct(signal, qv["bid"], qv["ask"], ledger, policy)
+    out["proposal"] = p
+    out["rules"] = evaluate(p, qv, created_ns, T_d_ns, ledger, policy)
+    out.update(disposition(out["rules"]))
+    if out["terminal"] == "SHADOW_EXPIRED":                            # §8.1.1: reserve only if every rule passes,
+        ledger.reserve(p)                                              # release at SHADOW_EXPIRED, same cycle
+        out["reserved"] = {"usd": ledger.reserved_usd, "btc": ledger.reserved_btc}
+        ledger.release()
+    return out
 
 
 def shadow_decision(validation, quote_tokens, quote_checks, created_ns, T_d_ns, ledger, closes=None,
                     policy=POLICY):
-    """Integrated fixture path (§6.4 steps 5-7, §7.1): validation -> signal -> mapping -> proposal -> policy
-    -> disposition. `validation` is validate.validate_bars output; `quote_checks` is validate.validate_quote."""
+    """Fixture path from already-validated bars (V3-V10 output): signal -> mapping -> Q -> proposal -> policy."""
     out = {"V": validation["results"]}
     if validation["first_failure"] is not None:
         out["terminal"] = f"NO_DECISION ({validation['subreason']})"
@@ -234,15 +274,75 @@ def shadow_decision(validation, quote_tokens, quote_checks, created_ns, T_d_ns, 
     if m != PROPOSAL:
         out["terminal"] = "NO_ACTION"
         return out
-    out["Q"] = quote_checks
-    if any(v == "FAIL" for v in quote_checks.values()):
-        out["terminal"] = "NO_DECISION (QUOTE_INVALID)"
+    return _propose(out, sig["signal"], quote_tokens, quote_checks, created_ns, T_d_ns, ledger, policy)
+
+
+V_ALL = ["V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11"]
+
+
+def run_cycle(v12a, bars_header, bars_body, t_send_ns, t_recv_ns, quote_header, quote_body, T_d_ns, created_ns,
+              ledger, store, policy=POLICY):
+    """One Stage A cycle, §6.4 steps 1-7, from SUPPLIED observations and raw artifacts (no I/O here).
+    `v12a` is boundary_check output (result, evidence, store_flag), or the string "FAIL" for a bare failure.
+    `bars_header`/`bars_body` are the D-8 artifacts, or None/None if the bars request got no HTTP response.
+    `store` is the bar store (validate.fold), mutated only by an admitted response (D-6).
+    Returns a dict with every check result, the signal path and the terminal state."""
+    out = {"V": {c: "NOT_EVALUATED" for c in V_ALL}, "V12a": None, "V12b": "NOT_EVALUATED",
+           "Q": {q: "NOT_EVALUATED" for q in ("Q1", "Q2", "Q3", "Q4", "Q5")}, "transitions": []}
+    v12a_result = v12a if isinstance(v12a, str) else v12a[0]
+    out["V12a"] = v12a_result
+    if v12a_result != "PASS":                                          # step 1: no fetch
+        out["reason"] = "V12A_FAILED"
+        out["terminal"] = "BOUNDARY_FAIL"
         return out
-    from .validate import quote_values
-    qv = quote_values(quote_tokens)
-    p = construct(sig["signal"], qv["bid"], qv["ask"], ledger, policy)
-    out["proposal"] = p
-    rules = evaluate_buy(p, qv, created_ns, T_d_ns, ledger, policy)
-    out["rules"] = rules
-    out.update(disposition(rules))
-    return out
+    if bars_header is None and bars_body is None:                      # step 2: no HTTP response (U112)
+        out["reason"] = "FETCH_FAILED"
+        out["terminal"] = "NO_DECISION (FETCH_FAILED)"
+        return out
+    try:                                                               # step 3: V12b before V1 (§5.6)
+        _, fields = V.parse_header_artifact(bars_header)
+        date = V.header_value(fields, "Date")
+    except ValueError:
+        date = None
+    out["V12b"], out["D"], out["theta_low"], out["theta_high"] = V.clock_check(date, t_send_ns, t_recv_ns)
+    if out["V12b"] != "PASS":
+        out["reason"] = "V12B_FAILED"
+        out["terminal"] = "BOUNDARY_FAIL"
+        return out
+    q = V.check_quote_response(quote_header, quote_body)               # step 4: quote fetched
+    out["displayed_sizes"] = V.displayed_sizes(q["quote"])
+    b = V.check_bars_response(bars_header, bars_body)                  # step 5: V1 ... V11
+    v1 = "PASS" if b["V1"] == "PASS" and q["V1_quote"] == "PASS" else "FAIL"
+    out["V"]["V1"], out["V"]["V2"] = v1, b["V2"]
+    if v1 == "FAIL" or b["V2"] != "PASS":
+        out["reason"] = "DATA_INVALID"                                 # V3-V11 NOT_EVALUATED (DATA_INVALID)
+        if v1 == "FAIL":                                               # first failing check decides (§4.7)
+            sub = b["subreason"] if b["V1"] == "FAIL" else "FETCH_FAILED"  # quote symbol failure (U95)
+        else:
+            sub = "INCOMPLETE_RESPONSE"                                # V2 (D-1)
+        out["terminal"] = f"NO_DECISION ({sub})"
+        return out
+    val = V.validate_bars(b["bars"], T_d_ns)
+    if V.admitted(b, val):
+        out["transitions"] = V.fold(store, val, V.request_start_ns(T_d_ns), T_d_ns)
+    v11 = V.check_V11(store, T_d_ns)
+    out["V"].update(val["results"])
+    out["V"]["V11"] = v11
+    first = next((c for c in V_ALL[2:] if out["V"][c] == "FAIL"), None)
+    if first is not None:
+        sub = "SOURCE_REVISION" if first == "V11" else V.SUBREASON[first]
+        out["terminal"] = f"NO_DECISION ({sub})"
+        return out
+    closes = V.window_closes(val)                                      # step 6
+    sig = decide_signal(closes)
+    out.update(sig)
+    m = mapping(sig["signal"], ledger.btc, policy["min_order_size"], ledger.open_or_unresolved)
+    out["mapping"] = m
+    if m == HOLD:
+        out["terminal"] = "HOLD"
+        return out
+    if m != PROPOSAL:
+        out["terminal"] = "NO_ACTION"
+        return out
+    return _propose(out, sig["signal"], q["quote"], V.validate_quote(q["quote"]), created_ns, T_d_ns,
+                    ledger, policy)                                    # step 7
