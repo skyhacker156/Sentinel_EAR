@@ -1,0 +1,68 @@
+diff --git a/experiments/sl-pt-001/SL-PT-001_R4.2f_Stage_A_Amendment_Candidate_Claude_2026-11-26.md b/experiments/sl-pt-001/SL-PT-001_R4.2h_Stage_A_Amendment_Candidate_Claude_2026-11-26.md
+index 0a736a5ca35b4a80618ca7689d5e1e4d9f8dbcf9..29e422a74bc50035f92594fc2251d672b4762786 100644
+--- a/experiments/sl-pt-001/SL-PT-001_R4.2f_Stage_A_Amendment_Candidate_Claude_2026-11-26.md
++++ b/experiments/sl-pt-001/SL-PT-001_R4.2h_Stage_A_Amendment_Candidate_Claude_2026-11-26.md
+@@ -1,7 +1,7 @@
+-# SL-PT-001 R4.2f: Stage A amendment candidate (FD-6 reconciliation delta on frozen R4.2c, second closure version)
++# SL-PT-001 R4.2h: Stage A amendment candidate (FD-6 reconciliation delta on frozen R4.2c, fourth closure version)
+ 
+ **Author:** Claude (Specification Lead / ARBITER). **Date:** 2026-11-26.
+-**R4.2f delta:** R4.2f = frozen R4.2c (blob `316d08c046dd7e1ea4a61be980c037b1c62037d5`, freeze record `030e7c0`) plus delta items D-1 to D-8 only, from `SL-PT-001_FD-6_Reconciliation_Claude_2026-11-26.md`, with the wording of D-2, D-3, D-4 and D-7 revised to meet founder closure conditions CL-01 to CL-04, and of D-3 and D-4 revised again for GPT findings G6-01 to G6-06 and Gemini B's stale-pointer note (`SL-PT-001_R4.2f_Closure_Package_Claude_2026-11-26.md`). It supersedes candidates R4.2d (blob `b60327c673f19285813311b0ee343ac6596ed813`) and R4.2e (blob `3328e47fc4abbe080d74266373e2eaed9605d403`), neither frozen. Every other line is byte-identical to R4.2c, except the closing line and the §16 OI-16 row, which are updated records. Until a founder freeze record names R4.2f, **R4.2c remains the frozen Stage A specification.**
++**R4.2h delta:** R4.2h = frozen R4.2c (blob `316d08c046dd7e1ea4a61be980c037b1c62037d5`, freeze record `030e7c0`) plus delta items D-1 to D-8 only, from `SL-PT-001_FD-6_Reconciliation_Claude_2026-11-26.md`, with the wording of D-2, D-3, D-4 and D-7 revised to meet founder closure conditions CL-01 to CL-04, and of D-3 and D-4 revised again for GPT findings G6-01 to G6-06 and Gemini B's stale-pointer note (`SL-PT-001_R4.2f_Closure_Package_Claude_2026-11-26.md`), then for G7-01 (U19) and G7-02 (INJECTED terminal paths), and C-09 (U11 expected sub-reason) only (`SL-PT-001_R4.2h_Closure_Package_Claude_2026-11-26.md`). It supersedes candidates R4.2d (blob `b60327c673f19285813311b0ee343ac6596ed813`), R4.2e (blob `3328e47fc4abbe080d74266373e2eaed9605d403`) R4.2f (blob `0a736a5ca35b4a80618ca7689d5e1e4d9f8dbcf9`) and R4.2g (blob `db213e9aed9edef1152c16e9a124c03e2f6efcd4`), none frozen. Every other line is byte-identical to R4.2c, except the closing line and the §16 OI-16 row, which are updated records. Until a founder freeze record names R4.2h, **R4.2c remains the frozen Stage A specification.**
+ **Responds to:** GPT's R4.2b closure check (finding G4-01, and the B4-03 condition), 2026-11-26. R4.2b responded to the R4.2a closure checks (GPT G3-06, G3-07; Gemini B4-01 to B4-03). R4.2a responded to the R4.2 closure checks; R4.2 to the R4.1 reviews.
+ **Base:** R4.2b (blob `45cf85ef1df02f65c38ef3ef4ae592c61fb99018`), with one targeted correction (request transport failure) and one clarification (§11.3), listed in the R4.2b closure note. R4.2b was R4.2a (blob `e5e10cebf934b9bcd3007b36e86c5a8e8914d023`, founder-verified with `ls-tree`) corrected per the R4.2a closure reconciliation. R4.2a was R4.2 (blob `f87ad21f4c70f558335070b843cb270e026005d2`) corrected per the R4.2 closure reconciliation. R4.2 was R4.1 (blob `a653252a8b184f0e184c7f2b42b4dbba6ff49d3f`, commit `0a4ddaf…` as reported by the founder) corrected per the R4.1 review reconciliation. R4.1 was itself R4 (blob `38b1de639a7ecea842269f8f48a2638363cb4871`) synchronized with founder decision record v1 (blob `eb76d8a2…`) and **v2** (blob `801f7a57f5a87220a44f0bbc3e262e2704fdf77b`). Changes from R4 to R4.1 are listed in the R4.1 review packet; from R4.1 to R4.2 in the R4.1 review reconciliation; from R4.2 to R4.2a in the R4.2 closure reconciliation; from R4.2a to R4.2b in the R4.2a closure reconciliation.
+ **Classification:** design documentation only.
+@@ -12,7 +12,7 @@
+ **What R4 is:** one complete specification for SL-PT-001.
+ - It integrates R3 (blob `203b4bf5…`), the R3 review reconciliation (corrections R4-1 to R4-16), the founder decision record and the probe evidence.
+ - A reader needs no other SL-PT-001 document to follow the system.
+-- **R4.2f proposes to replace frozen R4.2c** (candidates R4.2d and R4.2e are superseded and were never frozen); R4.2c replaced R4.2b, which replaced R4.2a, which replaced R4.2, R4.1 and R4. All remain in the repository as history.
++- **R4.2g proposes to replace frozen R4.2c** (candidates R4.2d to R4.2g are superseded and were never frozen); R4.2c replaced R4.2b, which replaced R4.2a, which replaced R4.2, R4.1 and R4. All remain in the repository as history.
+ - Earlier documents are **history**, not specification.
+ - **G-07 Draft 0.3** (blob `1cdbd7d3…`) still defines the execution-boundary components and terms used in §9 (K3, K5, LP-CONSUME, LP-WAL, LP-PRESEND, invariants G7-I1 to I10). R4 changes G-07 only by the approval predicate A0.3-13, stated in full in §9.2.
+ 
+@@ -862,7 +862,10 @@ Each condition means: stop, record, and no new authorization until it is resolve
+ | HOLD or NO_ACTION | everything through the mapping | Q1 to Q5 NOT_EVALUATED (NO_PROPOSAL); proposal `null` |
+ | QUOTE_INVALID | everything through the mapping; Q1 to Q5 **evaluated** (PASS/FAIL), at least one FAIL. If the quote request got no response, `quote_request.outcome` = NO_RESPONSE, the quote artifact is `null`, and Q1 to Q5 are FAIL (the quote is absent, §4.11) | proposal `null`; rule results `[]` |
+ | a proposal (REJECTED, SHADOW_EXPIRED) | everything | — |
+-| an injection (`origin` = INJECTED; R4.2f D-4) | `manifest_sha256` of the open run; `invocation_instant` = the founder's command instant; `T_d` and `created` from the fixture; `quote_sha256` = SHA-256 of the fixture's quote bytes; V12a evaluated; Q1 to Q5 evaluated on the fixture quote; `displayed_sizes` from it; the proposal; every applicable rule result; `lock_clock_at`; the injection fields. Terminal: REJECTED, SHADOW_EXPIRED (recorded at once: the §5.3 ceiling applies to scheduled cycles only), BOUNDARY_FAIL (V12a) or NO_DECISION (QUOTE_INVALID) | `slot_index`, `cycle_id`, `bars_request` and `quote_request` `null`; bars and header artifact hashes and the clock fields (t_send, t_recv, D, θ_low, θ_high) `null`; S20, S50, D(k−1), D(k), signal and mapping `null`; V1 to V11 and V12b NOT_EVALUATED (INJECTED); collections `[]`. On V12a FAIL the V12a-row rules apply instead |
++| an injection: **common to every injected path below** (`origin` = INJECTED; R4.2f D-4; R4.2g G7-02) | `manifest_sha256` of the open run; `invocation_instant` = the founder's command instant; `T_d` from the fixture; V12a (evaluated); `lock_clock_at`; the injection fields | `slot_index`, `cycle_id`, `bars_request` and `quote_request` `null`; the bars artifact hash and both header artifact hashes `null`; the clock fields (t_send, t_recv, D, θ_low, θ_high) `null`; S20, S50, D(k−1), D(k), signal and mapping `null`; V1 to V11 and V12b NOT_EVALUATED (INJECTED), except on the V12a path; the **bar collections** (per-bar token tuples, excluded bars, bar-store transitions, used bars) `[]`. Rule results are set per path below |
++| an injection: V12a fails → BOUNDARY_FAIL (R4.2g G7-02) | V12a = FAIL | `quote_sha256`, `displayed_sizes`, `created` and proposal `null`; V1 to V11, V12b and Q1 to Q5 NOT_EVALUATED (V12A_FAILED); rule results `[]` |
++| an injection: NO_DECISION (QUOTE_INVALID) (R4.2g G7-02) | V12a = PASS; `quote_sha256` = SHA-256 of the fixture's quote bytes; Q1 to Q5 evaluated, at least one FAIL; `displayed_sizes` where the fixture quote carries them | `created` and proposal `null`; rule results `[]` |
++| an injection: REJECTED or SHADOW_EXPIRED (R4.2g G7-02) | V12a = PASS; `quote_sha256`; Q1 to Q5 PASS; `displayed_sizes`; `created` from the fixture; the proposal; every applicable rule result. SHADOW_EXPIRED is recorded at once: the §5.3 ceiling applies to scheduled cycles only | — |
+ 
+ **Encoding rule:** **every numeric value is encoded as a JSON string** holding the exact decimal or the integer ns. **No JSON numbers appear in a TER** (U88), because canonical JSON serializes numbers as IEEE doubles (§10.5).
+ 
+@@ -1040,7 +1043,7 @@ Thirty slots are not thirty trades. **Qualifying NO_ACTION slots from EXIT-while
+ | U8 | (a) the newest completed bar is 10 min older than t_exp; (b) a valid quote 16 s old with a BUY signal | (a) STALE_SERIES; (b) REJECTED (R4) | A |
+ | U9 | replay of stored artifacts | byte-identical TER body. **REPLAY is an out-of-band test-run label**: it is never a TER field or chain record, and replay output is never appended (*GPT G-06*) | A |
+ | U10 | 100 runs; other process, locale, timezone | identical results | A |
+-| U11 | 50 completed bars | INSUFFICIENT_HISTORY | A |
++| U11 | 50 completed bars ending at t_exp | V8 and V10 both FAIL; sub-reason **DATA_GAP**, because V8 precedes V10 (§4.7). Fewer than 51 completed bars always fails V8, so V10 is never the first failure (DERIVED; R4.2h C-09) | A |
+ | U12 | bars in reverse order | sorted; recorded; same result | A |
+ | U13 | next_page_token not null (a string, including `""`) | INCOMPLETE_RESPONSE; no second request is issued | A |
+ | U14 | BUY while long; EXIT while flat (**fixture-backed**) | NO_ACTION (CF-2) | A |
+@@ -1048,7 +1051,7 @@ Thirty slots are not thirty trades. **Qualifying NO_ACTION slots from EXIT-while
+ | U16 | **restated:** for any issued ≤ approval_deadline, expires_at ≤ T_d + 180 s < T_d + 300 s; never two live authorizations | holds | B |
+ | U17 | the response includes a bar with t + 360 s > T_d | excluded and recorded | A |
+ | U18 | identical candles, varied quotes | identical S20, S50, D and signal | A |
+-| U19 | a slot-i cycle is still active at T_d(i+1) | CYCLE_OVERRUN(i) written by the successor; slot i+1 runs normally | A |
++| U19 | a slot-i cycle that has **not begun** its CYCLE append by T_d(i+1) (still computing, or waiting past the boundary) | CYCLE_OVERRUN(i) written by the successor; the old process's later append is refused; slot i+1 runs normally. A slot-i append that began before T_d(i+1) and is still completing is **not** an overrun: that is U117(c) (R4.2g G7-01) | A |
+ | U20 | a bar in a pending Stage B proposal's window changes on re-fetch | authorization invalidated | B |
+ | U24 | v tokens `0`, `0.0`, `0e0`, `-0`, `0.00000001` | first four zero_volume; all retained | A |
+ | U25 | tokens whose float sums differ from the exact sums; exponents | exact D; no float present | A |
+@@ -1260,7 +1263,7 @@ Scope: **A** = Stage A freeze; **B** = Stage B draft.
+ 
+ | ID | Scope | Issue | Why it matters | If unresolved | Decision-maker | Blocks |
+ |---|---|---|---|---|---|---|
+-| OI-16 | A | review status: R4.2c closure-checked and frozen (`030e7c0`). R4.2e closure round: Gemini B FREEZE-READY; GPT NOT FREEZE-READY (G6-01 to G6-06). **R4.2f closure round pending** (GPT and Gemini B; the R4.2e → R4.2f changes only) | the amended freeze must rest on reviewed text | the freeze would rest on unreviewed corrections | GPT and Gemini B; founder | **Stage A freeze (R4.2f)** |
++| OI-16 | A | review status: R4.2c closure-checked and frozen (`030e7c0`). R4.2e closure round: Gemini B FREEZE-READY; GPT NOT FREEZE-READY (G6-01 to G6-06). R4.2f closure round: G7-01, G7-02 raised. **R4.2h closure round pending** (GPT and Gemini B; the R4.2f → R4.2h changes only) | the amended freeze must rest on reviewed text | the freeze would rest on unreviewed corrections | GPT and Gemini B; founder | **Stage A freeze (R4.2h)** |
+ | OI-08 | A | Stage A never exercises the long-position branches, R8 or R12 on live data (no shadow fills) | coverage of the policy on live inputs | those branches are evidenced only by tests and injections | founder: accept the limitation at the Stage A exit | Stage A exit (acceptance) |
+ | OI-14 | A | FD-5 harness build | implementation authority | no Stage A evidence | founder, after the Stage A freeze | implementation |
+ | OI-10 | B | FD-4 TIF | order lifetime; the $1-increment BUY-below-ask consequence (§7.2) bears on reaching a fill | Stage B text incomplete | founder | Stage B freeze |
+@@ -1289,4 +1292,4 @@ Scope: **A** = Stage A freeze; **B** = Stage B draft.
+ - GPT has seen everything up to the reconciliation and R4.
+ - **Agreement between them is not independent verification.**
+ 
+-*End of R4.2f candidate.*
++*End of R4.2h candidate.*
