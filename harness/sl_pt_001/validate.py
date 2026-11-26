@@ -355,6 +355,28 @@ def check_quote_response(header_raw, body_raw):
     return {"V1_quote": "PASS", "quote": row, "available": True}
 
 
+def bars_for_record(body_raw):
+    """CC-01..05 answer CC-03 (contract v2.1): parseable BTC/USD bars are recorded in the TER partitions even when
+    V1 or V2 fails; an unparseable body gives []. Recording only: no store update, no signal (§4.9, §10.4)."""
+    try:
+        doc = parse_json_tokens(body_raw)
+        rows = doc["bars"][SYMBOL]
+    except (ValueError, TypeError, KeyError, AttributeError):
+        return []
+    if not isinstance(rows, list):
+        return []
+    out = []
+    for b in rows:
+        if not isinstance(b, dict):
+            continue
+        row = {}
+        if "t" in b:
+            row["t"] = b["t"] if isinstance(b["t"], str) and not isinstance(b["t"], NumTok) else NonNumeric(b["t"])
+        row.update({f: _numeric_or_marker(b[f]) for f in BAR_FIELDS if f in b})
+        out.append(row)
+    return out
+
+
 def displayed_sizes(quote, available=None):
     """§10.4 G8-01: {bs, as}, each the token text when the key holds a JSON number token, else None.
     None as a whole ONLY when no quote is available (request never issued, NO_RESPONSE, injected V12a FAIL).
@@ -395,8 +417,8 @@ def fold(store, v, request_start_ns, T_d_ns):
             events.append({"t": t, "event": "BASELINED", "new": new})
         elif cur["state"] == "PENDING":
             if new == cur["pending"]:
+                events.append({"t": t, "event": "CONFIRMED", "old": cur["tuple"], "new": new})   # CC-01: old = accepted
                 cur.update(tuple=new, state="CONFIRMED", count=2, pending=None)
-                events.append({"t": t, "event": "CONFIRMED", "new": new})
             else:                                                      # differs from pending (incl. A->B->A, U40)
                 events.append({"t": t, "event": "SOURCE_REVISION", "old": cur["pending"], "new": new})
                 cur["pending"] = new

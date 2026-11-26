@@ -250,6 +250,17 @@ class TERPaths(unittest.TestCase):
         ter, _ = scheduled(self.root, store, bars=rev)
         ev = [e for e in ter["bar_store_transitions"] if e["t"] == str(t)][0]
         self.assertEqual((ev["event"], ev["state"], ev["observation_count"]), ("CONFIRMED", "CONFIRMED", "2"))
+        self.assertEqual((ev["old"]["c"], ev["new"]["c"]), ("90000", "90001"))      # CC-01: old = previously accepted
+
+    def test_CC03_partitions_kept_when_V1_or_V2_fails(self):
+        for kw, n in ((dict(body=TC.bars_body(FX.bars("5"), token='"abc"')), 51),      # V2 fails
+                      (dict(qb=TC.quote_body(symbol="ETH/USD")), 51),                  # quote symbol V1 fail
+                      (dict(body=b"{not json"), 0)):                                  # unparseable: []
+            with self.subTest(n=n):
+                ter, _ = scheduled(self.root, {}, **kw)
+                self.assertEqual(len(ter["completed_bars"]), n)
+                self.assertEqual(ter["bar_store_transitions"], [])
+                self.assertEqual(ter["V3"]["reason"], "DATA_INVALID")
 
     def test_U9_replay_byte_identical_TER(self):
         a, _ = scheduled(tempfile.mkdtemp(), {})

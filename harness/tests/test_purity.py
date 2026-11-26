@@ -66,13 +66,17 @@ class EvidenceModuleBoundary(unittest.TestCase):
     """evidence.py writes files (artifacts, chain) by design; it must still have no network or order capability."""
 
     def test_evidence_no_network_imports(self):
-        with open(os.path.join(PKG, "evidence.py"), encoding="utf-8") as fh:
-            tree = ast.parse(fh.read())
-        net = {"socket", "ssl", "http", "urllib", "requests", "asyncio", "subprocess", "ctypes"}
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
-                mods = {a.name.split(".")[0] for a in node.names} if isinstance(node, ast.Import) else {(node.module or "").split(".")[0]}
-                self.assertFalse(mods & net, f"evidence.py imports {mods & net}")
+        for fname in ("evidence.py", "controller.py"):                 # controller.py (Strike 3): market I/O injected
+            with open(os.path.join(PKG, fname), encoding="utf-8") as fh:
+                src = fh.read()
+            tree = ast.parse(src)
+            net = {"socket", "ssl", "http", "urllib", "requests", "asyncio", "subprocess", "ctypes"}
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    mods = {a.name.split(".")[0] for a in node.names} if isinstance(node, ast.Import) else {(node.module or "").split(".")[0]}
+                    self.assertFalse(mods & net, f"{fname} imports {mods & net}")
+            for word in ("/v2/orders", "paper-api", "api.alpaca.markets", "submit_order", "cancel_order", "/v2/account"):
+                self.assertNotIn(word, src, f"{fname} contains {word!r}")
 
 
 if __name__ == "__main__":

@@ -196,8 +196,8 @@ POLICY_DOC = {                                                     # contract v2
 
 
 def policy_bytes():
-    """The P-0.2 policy file bytes. CONTRACT GAP: contract v2 fixes the JSON values, not the byte layout; the harness
-    writes canonical JCS bytes with no trailing newline, so the file hash is reproducible from the values alone."""
+    """The P-0.2 policy file bytes. Contract v2.1 CC-02: any valid layout is acceptable provided the same raw-byte
+    hash is used everywhere and the bytes never change once pinned; the harness writes JCS bytes, no trailing newline."""
     return jcs_bytes(POLICY_DOC)
 
 
@@ -474,7 +474,8 @@ def _presence(t):
     empty_decision = all(t[k] is None for k in NUMS + ["signal", "mapping", "proposal", "created"]) and \
         not t["rule_results"] and not t["used_bars"]
     if t["origin"] == "INJECTED":
-        return                                                     # injected rows: Strike 3 (injection runner)
+        _presence_injected(t)
+        return
     if v12a == "FAIL":
         ok = (term == "BOUNDARY_FAIL" and t["bars_request"] is None and t["quote_request"] is None and empty_decision
               and all(t[k] is None for k in ART + CLOCK) and all(not t[k] for k in ARRAYS) and t["displayed_sizes"] is None)
@@ -519,7 +520,7 @@ def _bar_view(b):
         return v if isinstance(v, str) else None
     out = {"t": None}
     try:
-        out["t"] = str(X.parse_rfc3339_ns(b["t"]))
+        out["t"] = str(X.parse_rfc3339_ns(b.get("t")))
     except (X.MalformedValue, TypeError):
         pass
     out.update({f: tok(b.get(f)) for f in BAR_FIELDS})
@@ -548,9 +549,8 @@ def bar_partitions(bars_parsed, T_d_ns):
 
 def transitions(events, store):
     """contract v2 §2 Transition objects from validate.fold events and the store AFTER the fold.
-    CONTRACT GAP (old/new for events other than SOURCE_REVISION, which §4.9 fixes as old and new): the harness
-    records old = the tuple the observation was compared against (the accepted tuple, or the pending one while
-    PENDING; null when t was new), new = the observed tuple (null for DISAPPEARED and DUPLICATE_COLLAPSED).
+    Contract v2.1 CC-01: BASELINED null/A; OBSERVED A/A; SOURCE_REVISION A/B, or B/C while already pending;
+    CONFIRMED A/B (old = previously accepted, new = newly accepted); DISAPPEARED A/null; DUPLICATE_COLLAPSED null/null.
     state/observation_count are the store values after the event; null for DUPLICATE_COLLAPSED (contract v2)."""
     out = []
     for e in events:
@@ -566,7 +566,7 @@ def transitions(events, store):
         elif ev == "SOURCE_REVISION":
             rec["old"], rec["new"] = _tuple_obj(e["old"]), _tuple_obj(e["new"])
         elif ev == "CONFIRMED":
-            rec["old"] = rec["new"] = _tuple_obj(e["new"])
+            rec["old"], rec["new"] = _tuple_obj(e["old"]), _tuple_obj(e["new"])          # CC-01: old = previously accepted
         elif ev == "DISAPPEARED":
             rec["old"] = _tuple_obj(st["tuple"])
         out.append(rec)
@@ -646,5 +646,71 @@ def build_scheduled_ter(ctx, cyc, store):
         "lock_clock_at": str(ctx["lock_clock_at"]), "V12a_evidence": ctx["V12a_evidence"], "injection": None,
         "used_bars": used,
     }
+    validate_ter(ter)
+    return ter
+
+
+# ------------------------------------------------------------------ injected TERs (contract v2 §2 injected rows)
+INJ_NULL = (["slot_index", "cycle_id", "bars_request", "quote_request", "bars_sha256", "bars_headers_sha256",
+             "quote_headers_sha256"] + CLOCK + NUMS + ["signal", "mapping"])
+INJ_EMPTY = ["completed_bars", "excluded_bars", "bar_store_transitions", "used_bars"]
+
+
+def _presence_injected(t):
+    """Contract v2 §2 'Injected terminal paths' (§10.4): one row per path; anything else is refused."""
+    term, v12a = t["terminal_state"], t["V12a"]["result"]
+    ok = all(t[k] is None for k in INJ_NULL) and all(t[k] == [] for k in INJ_EMPTY) and t["injection"] is not None
+    na = "V12A_FAILED" if v12a == "FAIL" else "INJECTED"
+    ok = ok and all(t[c] == {"result": "NOT_EVALUATED", "reason": na} for c in V_CHECKS if c != "V12a")
+    if v12a == "FAIL":
+        ok = (ok and term == "BOUNDARY_FAIL" and t["quote_sha256"] is None and t["displayed_sizes"] is None
+              and t["created"] is None and t["proposal"] is None and not t["rule_results"]
+              and all(t[q] == {"result": "NOT_EVALUATED", "reason": "V12A_FAILED"} for q in Q_CHECKS))
+    elif term == "NO_DECISION (QUOTE_INVALID)":
+        ok = (ok and t["quote_sha256"] is not None and t["displayed_sizes"] is not None and t["created"] is None
+              and t["proposal"] is None and not t["rule_results"]
+              and all(t[q]["result"] in ("PASS", "FAIL") for q in Q_CHECKS)
+              and any(t[q]["result"] == "FAIL" for q in Q_CHECKS))
+    elif term in ("REJECTED", "SHADOW_EXPIRED"):
+        fails = [r for r in t["rule_results"] if r["result"] == "FAIL"]
+        ok = (ok and t["quote_sha256"] is not None and t["displayed_sizes"] is not None and t["created"] is not None
+              and t["proposal"] is not None and t["proposal"]["side"] == "BUY" and bool(t["rule_results"])
+              and all(t[q]["result"] == "PASS" for q in Q_CHECKS) and bool(fails) == (term == "REJECTED"))
+    else:
+        ok = False
+    if not ok:
+        raise EvidenceError(f"injected TER presence rules violated for terminal path {term!r}")
+
+
+def build_injected_ter(ctx, res):
+    """Assemble an INJECTED TER-1 from controller.run_injection output `res` and `ctx`: manifest_sha256,
+    invocation_instant (founder command instant), T_d (fixture), policy_sha256, V12a_evidence, lock_clock_at,
+    quote_sha256 (raw fixture quote bytes, stored as an artifact) and injection {plan_sha256, fixture_sha256,
+    intended_rule}. BUY only (contract v2 §7; CC-04). Validated before return."""
+    v12a = res["V12a"]
+    na = "V12A_FAILED" if v12a != "PASS" else "INJECTED"
+    V = {c: _chk("NOT_EVALUATED", na) for c in V_CHECKS if c != "V12a"}
+    V["V12a"] = _chk(v12a)
+    Q = ({q: _chk("NOT_EVALUATED", "V12A_FAILED") for q in Q_CHECKS} if v12a != "PASS"
+         else {q: _chk(res["Q"][q]) for q in Q_CHECKS})
+    p = res.get("proposal")
+    proposal = None
+    if p is not None:
+        if p["side"] != "BUY" or "R" not in p:
+            raise EvidenceError("a Stage A injection is BUY-only (contract v2 §7; CC-04)")
+        proposal = {"instrument": p["instrument"], "side": p["side"], "order_type": p["order_type"],
+                    "L": dec_str(p["L"]), "q": dec_str(p["q"]), "R": dec_str(p["R"]),
+                    "rounding_inputs": {k: dec_str(p["rounding_inputs"][k]) for k in ROUNDING}}
+    ter = {k: None for k in TER_KEYS}
+    ter.update({
+        "schema": "TER-1", "origin": "INJECTED", "manifest_sha256": ctx["manifest_sha256"],
+        "invocation_instant": str(ctx["invocation_instant"]), "T_d": str(ctx["T_d"]), "created": _s(res.get("created")),
+        "quote_sha256": ctx["quote_sha256"], "completed_bars": [], "excluded_bars": [], "bar_store_transitions": [],
+        "used_bars": [], **V, **Q, "proposal": proposal,
+        "rule_results": [{"rule": r, "result": v} for r, v in (res.get("rules") or {}).items()],
+        "terminal_state": res["terminal"], "policy_sha256": ctx["policy_sha256"],
+        "displayed_sizes": res.get("displayed_sizes"), "egress_scope": "CLIENT_ALLOWLIST_ONLY",
+        "lock_clock_at": str(ctx["lock_clock_at"]), "V12a_evidence": ctx["V12a_evidence"],
+        "injection": dict(ctx["injection"])})
     validate_ter(ter)
     return ter

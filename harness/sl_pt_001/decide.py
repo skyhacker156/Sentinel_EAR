@@ -313,8 +313,7 @@ def run_cycle(v12a, bars_header, bars_body, t_send_ns, t_recv_ns, quote_header, 
     q = V.check_quote_response(quote_header, quote_body)               # step 4: quote fetched
     out["displayed_sizes"] = V.displayed_sizes(q["quote"], q["available"])     # G8-01 (fix F-2)
     b = V.check_bars_response(bars_header, bars_body)                  # step 5: V1 ... V11
-    if b["V1"] == "PASS":
-        out["bars_parsed"] = b["bars"]
+    out["bars_parsed"] = V.bars_for_record(bars_body)                  # CC-03: recorded even if V1/V2 fail
     v1 = "PASS" if b["V1"] == "PASS" and q["V1_quote"] == "PASS" else "FAIL"
     out["V"]["V1"], out["V"]["V2"] = v1, b["V2"]
     if v1 == "FAIL" or b["V2"] != "PASS":
@@ -326,7 +325,6 @@ def run_cycle(v12a, bars_header, bars_body, t_send_ns, t_recv_ns, quote_header, 
         out["terminal"] = f"NO_DECISION ({sub})"
         return out
     val = V.validate_bars(b["bars"], T_d_ns)
-    out["bars_parsed"] = b["bars"]                                     # arrival order, for TER partitions (§10.4)
     if V.admitted(b, val):
         out["transitions"] = V.fold(store, val, V.request_start_ns(T_d_ns), T_d_ns)
     v11 = V.check_V11(store, T_d_ns)

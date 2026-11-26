@@ -1,0 +1,16 @@
+SL-PT-001 Strike 3 mutation check (sandbox, Linux, Python 3.12), 2026-11-26
+Method: each guard in controller.py replaced by "if False:" in place, tests.test_controller run in a fresh process,
+original restored from a byte copy afterwards.
+First pass (24 controller tests):
+  run-token check before the CYCLE append (U83)            -> NOT CAUGHT: the only takeover test also crossed T_d(i+1),
+     so the time gate refused first. Finding; added test_U83_lost_token_refused_even_inside_the_slot.
+  SHADOW_EXPIRED-before-ceiling gate (U117b)               -> not testable by sed pattern in pass 1; added
+     test_U117b_shadow_expired_refused_if_clock_reads_before_ceiling (clock steps back after the wait).
+Second pass (26 controller tests), every guard:
+  read_token != token (U83)                                -> CAUGHT
+  SHADOW_EXPIRED and lock_clock_at < ceiling (U117b)       -> CAUGHT
+  lock_clock_at >= T_d(i+1) (U117a)                        -> CAUGHT
+  token held by an INJECTION -> INJECTION_ABORTED (U91)    -> CAUGHT
+  injection within 30 s of the next T_d (§6.5)            -> CAUGHT
+  CYCLE already exists -> CONCURRENT_INVOCATION (U74)      -> CAUGHT
+  RUN_OPEN must follow prev_chain_head (§10.1)            -> CAUGHT
