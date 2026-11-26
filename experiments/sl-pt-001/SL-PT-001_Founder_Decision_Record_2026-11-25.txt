@@ -1,0 +1,10 @@
+SL-PT-001 Founder Decision Record
+Date: 2026-11-25
+Status: CONFIRMED BY FOUNDER
+FD-7  Cycle trigger: timer (Windows Task Scheduler, invoke + log only). No catch-up, no retry. Overlapping launches permitted at the scheduler and refused by the harness lock (recorded as CONCURRENT_INVOCATION); the same cycle never executes twice. Machine must remain awake. Task XML and invocation log preserved and hashed.
+W     Minimum remaining approval window: 90 s, applied in Stage A and Stage B. Stage B feasibility UNVERIFIED; must be tested.
+FD-6  Slot audit in GPT's blind script: yes. Founder hand cross-check of one manifest: yes. Script hash committed before any TER exposure.
+CF-7  Adopt: stub tests and read-only pre-flight (incl. not-found COID query) first; the first order is the first governed order; duplicate-COID test only under separate authorization.
+CF-2  Accept: BUY while long -> NO_ACTION; EXIT while flat -> NO_ACTION.
+CF-1  Accept: limit price and quantity derived at proposal and bound by approval; fresh quote at issuance validates only; no repricing or resizing after approval; validation failure kills the authorization.
+Boundary: does not authorize R4 freeze, FD-5 harness build, Alpaca paper credentials, Stage B implementation, or any order.
