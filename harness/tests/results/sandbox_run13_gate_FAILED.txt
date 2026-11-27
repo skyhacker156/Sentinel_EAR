@@ -1,0 +1,58 @@
+RUN 13 (sandbox, Linux, Python 3.12), test_gate first execution: FAILED (2 test-premise errors: R6 case also broke R12 via cash 100 < 450; R13 case also aged the quote past R4). Fixed in the test, not the harness.
+test_every_rule_pass_and_fail (tests.test_gate.RuleMatrix.test_every_rule_pass_and_fail) ... 
+  test_every_rule_pass_and_fail (tests.test_gate.RuleMatrix.test_every_rule_pass_and_fail) (rule='R6') ... FAIL
+  test_every_rule_pass_and_fail (tests.test_gate.RuleMatrix.test_every_rule_pass_and_fail) (rule='R13') ... FAIL
+test_U101_A_B_C_D_pending_throughout (tests.test_gate.Section14Pure.test_U101_A_B_C_D_pending_throughout) ... ok
+test_U105_sizing_vectors (tests.test_gate.Section14Pure.test_U105_sizing_vectors) ... ok
+test_U106_t_recv_before_t_send (tests.test_gate.Section14Pure.test_U106_t_recv_before_t_send) ... ok
+test_U107_Date_absent_or_unparseable (tests.test_gate.Section14Pure.test_U107_Date_absent_or_unparseable) ... ok
+test_U110_EXIT_fixture_reservation (tests.test_gate.Section14Pure.test_U110_EXIT_fixture_reservation) ... ok
+test_U119_R2_not_limit (tests.test_gate.Section14Pure.test_U119_R2_not_limit) ... ok
+test_U122_leap_second_malformed_and_9_fraction_digits_exact (tests.test_gate.Section14Pure.test_U122_leap_second_malformed_and_9_fraction_digits_exact) ... ok
+test_U97_clock_masking_plus_4s_with_2s_transit (tests.test_gate.Section14Pure.test_U97_clock_masking_plus_4s_with_2s_transit) ... ok
+test_U98_round_trip_boundaries (tests.test_gate.Section14Pure.test_U98_round_trip_boundaries) ... ok
+test_U102_last_slot_token_at_RUN_CLOSE (tests.test_gate.Section14Rows.test_U102_last_slot_token_at_RUN_CLOSE) ... ok
+test_U104_shadow_expired_delayed_past_next_boundary (tests.test_gate.Section14Rows.test_U104_shadow_expired_delayed_past_next_boundary) ... ok
+test_U15_invocation_at_T_d_plus_200s_same_cycle_id_R13 (tests.test_gate.Section14Rows.test_U15_invocation_at_T_d_plus_200s_same_cycle_id_R13) ... ok
+test_U96_order_V12a_bars_V12b_quote_and_no_quote_after_V12b_fail (tests.test_gate.Section14Rows.test_U96_order_V12a_bars_V12b_quote_and_no_quote_after_V12b_fail) ... ok
+test_U99_crash_before_append_leaves_no_CYCLE_orphans_kept (tests.test_gate.Section14Rows.test_U99_crash_before_append_leaves_no_CYCLE_orphans_kept)
+Harness side of U99 for each pre-append boundary: a process dying there leaves no CYCLE record, its ... ok
+
+======================================================================
+FAIL: test_every_rule_pass_and_fail (tests.test_gate.RuleMatrix.test_every_rule_pass_and_fail) (rule='R6')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/claude/hb/harness/tests/test_gate.py", line 230, in test_every_rule_pass_and_fail
+    self.assertEqual(failing, exact)
+AssertionError: Lists differ: ['R6', 'R12'] != ['R6']
+
+First list contains 1 additional elements.
+First extra element 1:
+'R12'
+
+- ['R6', 'R12']
++ ['R6']
+
+======================================================================
+FAIL: test_every_rule_pass_and_fail (tests.test_gate.RuleMatrix.test_every_rule_pass_and_fail) (rule='R13')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/claude/hb/harness/tests/test_gate.py", line 230, in test_every_rule_pass_and_fail
+    self.assertEqual(failing, exact)
+AssertionError: Lists differ: ['R4', 'R13'] != ['R13']
+
+First differing element 0:
+'R4'
+'R13'
+
+First list contains 1 additional elements.
+First extra element 1:
+'R13'
+
+- ['R4', 'R13']
++ ['R13']
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.137s
+
+FAILED (failures=2)
