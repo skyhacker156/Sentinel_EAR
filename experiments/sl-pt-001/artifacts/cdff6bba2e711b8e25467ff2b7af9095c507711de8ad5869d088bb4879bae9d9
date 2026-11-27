@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+Date: Fri, 27 Nov 2026 04:56:03 GMT
+Content-Type: application/json
+Transfer-Encoding: chunked
+Connection: keep-alive
+Vary: Accept-Encoding
+X-Ratelimit-Limit: 200
+X-Ratelimit-Remaining: 189
+X-Ratelimit-Reset: 1795755366
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Request-ID: baf7cb48aa88c9a4ffda8f8c30ba8707
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Methods: GET, OPTIONS
+Access-Control-Allow-Headers: Apca-Api-Key-Id, Apca-Api-Secret-Key, Authorization
+Access-Control-Max-Age: 1728000
+
