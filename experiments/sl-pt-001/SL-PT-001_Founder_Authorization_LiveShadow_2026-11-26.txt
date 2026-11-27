@@ -1,0 +1,46 @@
+SL-PT-001 FOUNDER AUTHORIZATION RECORD: STAGE A LIVE SHADOW RUN (ADOPTED)
+
+1. Authority
+   Frozen R4.2i (blob 3549d2275ce3f5490f93802ff9eec1570f2fb48f, SHA-256
+   4259551121fa3d271074fb13da51fb270ae859b0b516a953752731f20972a51a, freeze 5ec5d1b); FD-5 v2; decision v5;
+   FD-6 v2.3: contract 351d34ea49f514624a40376f3c49cd7796b81d264a4c195c966087c8c6361bda, effective auditor
+   48629e8a4259ae09169cf4d9be59081e8aff25522306f04c99b89d94d55f0424 (source founder-held), migration commit d0433ec3edbee375e9c4d61ddd6fb2b3fe9d777f.
+
+2. Pre-live gate (Â§11.6, Â§6.1)
+   [MET] All 110 Stage A rows (99 U + 11 X) executed with retained evidence, 0 open: coverage record at 5e63251c0b1298b5a34039c0ebd171c57d996ff6
+         (harness: Windows log windows_20261127T001804Z.txt, 214/214; auditor: GPT FD-6 v2.3 W4 46/46 and 81/81
+         synthetic assertions, scope limits verbatim; no claim of physical scheduler, concurrency, append-refusal or
+         crash-durability verification from auditor classification tests).
+   [MET] Executed pass and fail case for every Stage A rule (R1-R13, R15, R16).
+   [MET] FD-6 custody: seed.sha256 fb781b1ab896c4a4b0f9ad03c39fefab174382ed8e8304dca15a46acdd425139 and original pin
+         709137f2... at b192401; migration to v2.3 at d0433ec3edbee375e9c4d61ddd6fb2b3fe9d777f; both before GENESIS and any TER.
+   [MET] Policy P-0.2 41a0e099ce36e3747bf41f999781cce61a932b9ead5d18d997a394e77a14004f; injection plan
+         a6efadc1c27d92c760c1d8e68011d5fce1365b46c501a5128de36f2b5ca193ed and six fixtures committed and pushed;
+         GENESIS at 18df7056a2150ef3f1cbe91bcd2658d0d6346cb5.
+   [MET at J] Exported task XML checked against Â§6.1 by script J before the manifest is pushed; task_xml_sha256 and
+         manifest SHA-256 recorded in J's commit. If J's check fails, the task is removed and this run does not occur.
+   [MET] PC clock offset to time.windows.com about -0.23 s (founder check 2026-11-26 19:24 EST; V12b bound 2 s).
+
+3. What is authorized
+   One Stage A live SHADOW run, manifest runs/run-stage-a-1.json written by script J:
+   - T_d0 = 2026-11-27T02:01:00Z (2026-11-26T21:01:00 EST), declared_slots N = 36,
+     last decision 23:56 EST, run boundary T_d(N) = 00:01 EST;
+   - keyless, read-only market-data requests to data.alpaca.markets only (bars and latest quote, Â§4.2), via the
+     scheduled wrapper and the committed harness;
+   - shadow proposals only; every proposal ends REJECTED or SHADOW_EXPIRED; no order exists;
+   - six runtime BUY injections (R1, R4, R5, R10, R12, R13), subordinate to scheduled cycles (script M).
+
+4. What is NOT authorized
+   Credentials of any kind in the harness environment or configuration; any connection to a trading host; any order,
+   cancel or account call; Stage B implementation or activation; any change to the frozen spec, policy, harness or
+   custody files during the run; the seed reveal before scope.json is committed after RUN_CLOSE.
+
+5. Stop conditions (founder runs cli stop, then reports)
+   Any V12a BOUNDARY_FAIL; any record the harness refuses to validate; any unexpected host contact; machine sleep or
+   restart during the run (slots become MISSING; the run is not restarted under the same manifest).
+
+6. Required limitation (Â§2.3, verbatim)
+   "Disconnection from trading is asserted at the HTTP-client level only. Alternate egress paths in the process or
+   host (other libraries, raw sockets, proxies, inherited handles) were not excluded."
+
+Adopted by: Patrick Sullivan, Founder, Sentinel Labs LLC (typed AUTHORIZE in script P)    Date/time: 2026-11-26 19:27:49 EST
