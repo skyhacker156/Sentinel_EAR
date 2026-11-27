@@ -1,0 +1,18 @@
+SL-PT-001 | Founder Decision - FD-6 Auditor Migration
+Decision: ADOPT_V2_3_PRE_GENESIS_PRESERVE_SEED
+Adopted: TER-1 Interface Contract v2.3 and independent auditor v2.3 under CC-07 (migration) and CC-08 (repository-root custody).
+Contract SHA-256: 351d34ea49f514624a40376f3c49cd7796b81d264a4c195c966087c8c6361bda
+Effective auditor SHA-256: 48629e8a4259ae09169cf4d9be59081e8aff25522306f04c99b89d94d55f0424
+Original auditor SHA-256, preserved: 709137f259d82b709b924ed83789da0172038241b824af2ce2b9c69b18bba6d1
+Original seed commitment, preserved: fb781b1ab896c4a4b0f9ad03c39fefab174382ed8e8304dca15a46acdd425139
+Conditions verified by script I before commit: no GENESIS or TER; contract and auditor hashes; original custody
+files byte-for-byte and introduced once at b192401; historical seed artifact 07f43e0dc8c52879594bc860404ae541554ff0a1 ancestor and unchanged
+(contents not printed); migration file committed alone, strictly before GENESIS.
+Original test evidence, including the v2.1 failures, retained by GPT; auditor source founder-only (decision v5);
+secret seed retained without disclosure, replacement or resampling; frozen R4.2i unchanged.
+Authorization boundary: auditor custody migration ONLY. No live market-data cycles, task activation, credentials,
+trading connections, orders or Stage B. Pre-live gate closure and live-shadow authorization remain separate decisions.
+Founder approval: Patrick Sullivan (typed ADOPT in script I)
+Date/time: 2026-11-26 19:23:31 EST (2026-11-27T00:23:31Z)
+Migration commit: d0433ec3edbee375e9c4d61ddd6fb2b3fe9d777f (auditor-migration.json SHA-256 0c1bf0ccddcf559fd5721037f0aabd5ab19b5a3e7942adc6228a6c8f856b5e12)
+Push evidence reference: 5e63251..d0433ec  main -> main
