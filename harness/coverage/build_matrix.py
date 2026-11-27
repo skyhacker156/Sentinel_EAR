@@ -1,5 +1,5 @@
 """Build the §11.6 coverage matrix from the frozen spec's §14 Stage-A rows and a retained verbose test log.
-Usage: python build_matrix.py <spec.md> <verbose_test_log.txt> > matrix.md   (stdlib only; reads, never writes evidence)
+Usage: python build_matrix.py <spec.md> <verbose_test_log.txt> <out.md>  (writes UTF-8 itself; never via the console)   (stdlib only; reads, never writes evidence)
 A row is HARNESS-EXECUTED only if a test whose name carries its id appears in the log with result 'ok'.
 AUDITOR rows are classifications only the FD-6 auditor executes (GPT, synthetic evidence, scope-limited)."""
 import hashlib, re, sys
@@ -41,10 +41,14 @@ def tests(log):
     return res
 
 
-def main(spec, log):
+def main(spec, log, out_path):
+    out = open(out_path, "w", encoding="utf-8", newline="\n")
+
+    def print(*a):
+        out.write(" ".join(str(x) for x in a) + "\n")
     R, Tt = rows(spec), tests(log)
     print("# SL-PT-001 | §11.6 coverage matrix (Stage A) | generated")
-    print(f"\nSpec SHA-256 `{hashlib.sha256(open(spec,'rb').read()).hexdigest()}`; test log `{log.split('/')[-1]}` "
+    print(f"\nSpec SHA-256 `{hashlib.sha256(open(spec,'rb').read()).hexdigest()}`; test log `{log.replace(chr(92), '/').split('/')[-1]}` "
           f"SHA-256 `{hashlib.sha256(open(log,'rb').read()).hexdigest()}`; {len(Tt)} test results parsed.\n")
     print("| id | §14 input (abridged) | harness evidence (tests, result) | auditor half | status |\n|---|---|---|---|---|")
     counts = {}
@@ -65,7 +69,10 @@ def main(spec, log):
     print("\n**Totals:** " + "; ".join(f"{k}: {v}" for k, v in sorted(counts.items())) + f"; rows: {len(R)}")
     print("\nAuditor results are synthetic classification checks only: they are not evidence of real scheduler, "
           "concurrency, crash-recovery or filesystem-durability behavior (GPT dispatch, 2026-11-26).")
+    out.close()
+    return counts
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    c = main(sys.argv[1], sys.argv[2], sys.argv[3])
+    sys.stdout.write("rows " + str(sum(c.values())) + "; " + "; ".join(f"{k}: {v}" for k, v in sorted(c.items())) + "\n")
