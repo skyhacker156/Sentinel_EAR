@@ -221,6 +221,46 @@ class Section14More(unittest.TestCase):
         self.assertEqual((failing(ex, long_), failing(buy, flat)), ([], []))
 
 
+class XSeries(unittest.TestCase):
+    """§14 X-series Stage-A rows on the harness side (X1, X2, X4, X5, X6 are test_decision_path EVAL_X*;
+    X10 is test_purity; X11 is auditor-only). E-1: for X8/X10 'recorded' means retained test output."""
+
+    def test_X3_previous_cycle_snapshot_REJECTED_R4(self):
+        lg = D.ShadowLedger()
+        p = D.construct("BUY", F(90000), F(90001), lg)
+        prev = {"bid": F(90000), "ask": F(90001), "t": FX.T_D - 300 * NS + 3 * NS}       # last cycle's quote
+        res = D.evaluate(p, prev, FX.T_D + 5 * NS, FX.T_D, lg)
+        self.assertEqual([k for k, v in res.items() if v == "FAIL"], ["R4"])
+
+    def test_X7_limit_1_5pct_off_mid_REJECTED_R5(self):
+        lg = D.ShadowLedger()
+        p = D.construct("BUY", F(90000), F(90001), lg)
+        p["L"] = F(90000) * F(1015, 1000)
+        res = D.evaluate(p, {"bid": F(90000), "ask": F(90001), "t": FX.T_D + 2 * NS}, FX.T_D + 5 * NS, FX.T_D, lg)
+        self.assertEqual([k for k, v in res.items() if v == "FAIL"], ["R5"])
+
+    def test_X8_trading_host_refused_before_network_io(self):
+        from sl_pt_001 import market as M
+        opened = []
+        cl = M.Client(connect=lambda h, t: opened.append(h))
+        for host, target in (("paper-api.alpaca.markets", "/v2/orders"), ("api.alpaca.markets", "/v2/orders")):
+            with self.assertRaises(M.RefusedRequest):
+                cl.get(host, target)
+        self.assertEqual(opened, [])
+        print("\n[X8] BOUNDARY_VIOLATION_ATTEMPT (retained test output, E-1): trading-host requests refused before I/O")
+
+    def test_X9_credential_in_env_or_config_BOUNDARY_FAIL(self):
+        from sl_pt_001 import cli as CLI
+        from sl_pt_001 import market as M
+        r1 = CLI.boundary(M.Client(), {"PATH": "x", "APCA_API_KEY_ID": "k"})[0]
+        d = tempfile.mkdtemp()
+        cfgp = os.path.join(d, "config.json")
+        with open(cfgp, "wb") as fh:
+            fh.write(b'{"client_allowlist":["data.alpaca.markets"],"api_key":"k"}')
+        r2 = CLI.boundary(M.Client(), {"PATH": "x"}, config_path=cfgp)[0]
+        self.assertEqual((r1, r2), ("FAIL", "FAIL"))
+
+
 class RuleMatrix(unittest.TestCase):
     """§11.6: an EXECUTED pass case and fail case for every Stage A rule. Pass = a valid proposal with the rule PASS;
     fail = a one-field change making that rule FAIL. Each fail case asserts the exact failing set."""

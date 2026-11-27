@@ -1,10 +1,11 @@
 """Build the §11.6 coverage matrix from the frozen spec's §14 Stage-A rows and a retained verbose test log.
-Usage: python build_matrix.py <spec.md> <verbose_test_log.txt> <out.md>  (writes UTF-8 itself; never via the console)   (stdlib only; reads, never writes evidence)
+Usage: python build_matrix.py <spec.md> <verbose_test_log.txt> <out.md> [auditor_coverage.csv ...]  (writes UTF-8 itself)
+Auditor CSVs (GPT, FD-6 v2.3) are merged per row; their scope_and_limits text is carried verbatim.   (stdlib only; reads, never writes evidence)
 A row is HARNESS-EXECUTED only if a test whose name carries its id appears in the log with result 'ok'.
 AUDITOR rows are classifications only the FD-6 auditor executes (GPT, synthetic evidence, scope-limited)."""
-import hashlib, re, sys
+import csv, hashlib, re, sys
 
-AUDITOR = {"U26", "U27", "U34", "U37", "U38", "U41", "U66", "U68", "U69", "U71", "U103", "U109", "U120"}
+AUDITOR = {"X11", "U26", "U27", "U34", "U37", "U38", "U41", "U66", "U68", "U69", "U71", "U103", "U109", "U120"}
 BOTH = {"U73", "U74", "U75", "U76", "U77", "U99", "U102", "U104", "U117", "U118", "U19", "U91", "U83"}
 NOTE = {
     "U99": "harness half: no CYCLE, orphans kept, chain verifies; classification INCOMPLETE is auditor's. "
@@ -21,7 +22,7 @@ def rows(spec):
     e = next(i for i, l in enumerate(L) if l.startswith("## 15"))
     out = []
     for l in L[s:e]:
-        m = re.match(r"\|\s*(U[\w-]+)\s*\|(.*)\|\s*([^|]*)\|\s*$", l)
+        m = re.match(r"\|\s*([UX]\d+[\w-]*)\s*\|(.*)\|\s*([^|]*)\|\s*$", l)
         if m and "A" in m.group(3):
             out.append((m.group(1), m.group(2).split("|")[0].strip()))
     return out
@@ -41,28 +42,46 @@ def tests(log):
     return res
 
 
-def main(spec, log, out_path):
+def auditor_rows(paths):
+    by = {}
+    for pth in paths:
+        name = pth.replace(chr(92), "/").split("/")[-1]
+        with open(pth, encoding="utf-8", newline="") as fh:
+            for r in csv.DictReader(fh):
+                if r["spec_id"]:
+                    by.setdefault(r["spec_id"], []).append((name, r["case_id"], r["status"], r["scope_and_limits"]))
+    return by
+
+
+def main(spec, log, out_path, csvs=()):
     out = open(out_path, "w", encoding="utf-8", newline="\n")
 
     def print(*a):
         out.write(" ".join(str(x) for x in a) + "\n")
-    R, Tt = rows(spec), tests(log)
+    R, Tt, AU = rows(spec), tests(log), auditor_rows(csvs)
     print("# SL-PT-001 | §11.6 coverage matrix (Stage A) | generated")
     print(f"\nSpec SHA-256 `{hashlib.sha256(open(spec,'rb').read()).hexdigest()}`; test log `{log.replace(chr(92), '/').split('/')[-1]}` "
           f"SHA-256 `{hashlib.sha256(open(log,'rb').read()).hexdigest()}`; {len(Tt)} test results parsed.\n")
-    print("| id | §14 input (abridged) | harness evidence (tests, result) | auditor half | status |\n|---|---|---|---|---|")
+    for c in csvs:
+        print(f"Auditor CSV `{c.replace(chr(92), '/').split('/')[-1]}` SHA-256 `{hashlib.sha256(open(c,'rb').read()).hexdigest()}`")
+    print("\n| id | §14 input (abridged) | harness evidence (tests, result) | auditor evidence (GPT synthetic; limits verbatim) | status |\n|---|---|---|---|---|")
     counts = {}
     for uid, inp in R:
         pat = re.compile(r"(?<![A-Za-z0-9])" + re.escape(uid) + r"(?![0-9])")
         hits = [f"`{k}` {v}" for k, v in sorted(Tt.items()) if pat.search(k)]
         ok = hits and all(h.endswith(" ok") for h in hits)
-        side = "REQUIRED (GPT)" if uid in AUDITOR or uid in BOTH else "-"
+        au = AU.get(uid, [])
+        au_ok = bool(au) and all(a[2] == "PASS" for a in au)
+        need = uid in AUDITOR or uid in BOTH
+        side = ("<br>".join(f"{a[1]} {a[2]}: {a[3][:140]}" for a in au) if au else ("REQUIRED, none supplied" if need else "-"))
         if uid in AUDITOR:
-            st = "AUDITOR-ONLY: pending GPT table"
-        elif ok:
-            st = "HARNESS-EXECUTED" + (" + auditor half pending" if uid in BOTH else "")
+            st = "AUDITOR-EXECUTED (synthetic classification only)" if au_ok else "OPEN (auditor)"
+        elif not ok:
+            st = "OPEN (harness)"
+        elif uid in BOTH:
+            st = "BOTH HALVES EXECUTED" if au_ok else "OPEN (auditor half)"
         else:
-            st = "OPEN"
+            st = "HARNESS-EXECUTED" + (" + auditor assertions" if au_ok else "")
         counts[st] = counts.get(st, 0) + 1
         note = NOTE.get(uid, "")
         print(f"| {uid} | {inp[:90].replace('|','/')} | {'<br>'.join(hits) or '-'}{('<br>'+note) if note else ''} | {side} | {st} |")
@@ -74,5 +93,5 @@ def main(spec, log, out_path):
 
 
 if __name__ == "__main__":
-    c = main(sys.argv[1], sys.argv[2], sys.argv[3])
+    c = main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:])
     sys.stdout.write("rows " + str(sum(c.values())) + "; " + "; ".join(f"{k}: {v}" for k, v in sorted(c.items())) + "\n")
