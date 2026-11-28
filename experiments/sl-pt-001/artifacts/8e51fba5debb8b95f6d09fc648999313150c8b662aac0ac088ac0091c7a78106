@@ -1,0 +1,16 @@
+HTTP/1.1 200 OK
+Date: Sat, 28 Nov 2026 03:01:07 GMT
+Content-Type: application/json
+Content-Length: 122
+Connection: keep-alive
+X-Ratelimit-Limit: 200
+X-Ratelimit-Remaining: 199
+X-Ratelimit-Reset: 1795834867
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Request-ID: b2124099f74c4b3f51be74ea144bf2a4
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Methods: GET, OPTIONS
+Access-Control-Allow-Headers: Apca-Api-Key-Id, Apca-Api-Secret-Key, Authorization
+Access-Control-Max-Age: 1728000
+
