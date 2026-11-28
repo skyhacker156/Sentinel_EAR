@@ -1,0 +1,81 @@
+SL-PT-001 Founder Decision Record v6 (DRAFT 4; NOT ADOPTED)
+Date prepared: 2026-11-26
+Prepared from: the founder's proposed v6 (21:45 EST); GPT's Strike 7.4, 7.5 and 7.6 dispositions; R5-B2 section 6; R5-B3; R5-B3a; R5-B3b
+Status: every line is UNADOPTED until the adoption block is completed. GPT's recommendations are not decisions.
+Classification: Part 1 is specification decisions only and grants no authority.
+
+PART 1. SPECIFICATION DECISIONS
+  [GPT: adopt as written]
+  D-1     Never resubmit after an ambiguous send; query by the original COID only. An AMBIGUOUS order ends
+          only on venue evidence; no founder declaration, elapsed time or not-found count ends it or releases
+          its reservation. No HTTP status releases a reservation; only a venue order object with a terminal
+          status does. Disclosed: a permanent AMBIGUOUS stops Stage B (frozen R16) (R5-B3a D; R5-B3b).       [UNADOPTED]
+  D-4     Durable local WAL before submission; no WAL, no send; evidence pushed after each terminal.          [UNADOPTED]
+  D-5     Founder reviews the complete proposal summary (R5-B2 2.12) before approval; independent lifecycle
+          reconstruction afterwards.                                                                         [UNADOPTED]
+  D-7     GPT writes the blind Stage B auditor; Gemini B challenges it; builder and auditor separated.        [UNADOPTED]
+  FD-G19  Interactive confirmation (12-hex prefix typed); APPROVAL binds the full proposal hash and all bound
+          fields; recorded as not cryptographically authenticated.                                           [UNADOPTED]
+  D-11    The executor holds a keyless market-data client for checkpoints (c) and (d); the decision process
+          stays keyless.                                                                                     [UNADOPTED]
+
+  [GPT: adopt with amendment; amended text below]
+  D-2     Founder dashboard reconciliation (L-3). One-to-one matching of dashboard orders to WAL records by
+          COID or broker order id; duplicates and identity conflicts halt; field-only correspondence is
+          UNRESOLVED and never conclusive (R5-B3b F.3).                                                      [UNADOPTED]
+  D-3     Release only if W(t_d) <= expires_at - delta_send - 2 x epsilon_step; delta_send = 10 s total budget
+          from the (d) sample to the complete response; delta_start = 2 s to the client-side transmission
+          boundary t_tx0; cumulative clock-adjustment detection from CONSUME, epsilon_step = 250 ms; all
+          bounds inclusive; shared-host clock, void if split; fail closed (R5-B3 C; R5-B3a C).               [UNADOPTED]
+  D-6     Attended sessions only; two-phase close; PRESEND is the logical execution release, and closure
+          is serialized against it by chain order. Disclosed: a close does not recall an already-released
+          order; at most one can be physically transmitted after the close request. No remote approval
+          channel (R5-B3a B).                                                                                [UNADOPTED]
+  D-8     Separate Stage B chain; GENESIS_B anchored to the founder Stage A exit record, the audit result
+          (verdict, audited head, scope, auditor hash), seed commitment and reveal custody in the order
+          commitment < scope.json < reveal < audit report, the Stage A chain head, and the single manifest
+          carrying the >= 30 qualifying streak (R4.2i 11.4); RUN_OPEN_B refused on any inconsistency
+          (R5-B3 G.7; R5-B3a; R5-B3b).                                                                       [UNADOPTED]
+  D-12    delta_send, delta_start and epsilon_step are provisional, fail-closed engineering constraints.
+          Pre-flight GET latency is context only and does not establish a POST bound.                       [UNADOPTED]
+  D-13    L-2 evaluates a predeclared set of gross bases and rounding comparisons, records every consistent
+          pair and the exact residuals, and pins no broker rule. PASS is decided on the authoritative basis
+          only; the other basis is diagnostic. Fee records are deduplicated and converted per R5-B3b. Fill
+          records are authoritative only if
+          complete (sum of fill quantities = Q_f) and deduplicated by activity id. A residual under $0.01 is
+          applied once, as a field of the single RECONCILE_L2 record (R5-B3 A; R5-B3a A).                   [UNADOPTED]
+
+  [GPT: adopt conditionally]
+  FD-G13  Accept the disclosed G7-I5 and G7-I8 limitations for this bounded paper experiment only; no
+          extension to real capital without a new decision.                                                  [UNADOPTED]
+  D-10    IOC-only milestone TIF, conditional on venue compatibility (venue gate V-2); GTC deferred
+          (R5-B2 Annex A).                                                                                   [UNADOPTED]
+
+  [new in R5-B3; GPT: supported (Strike 7.5)]
+  D-14    Attempt policy: each APPROVAL authorizes exactly one order. Later attempts after a zero-fill
+          outcome need campaign permission (P23 with max_attempts K and an expiry), the prior attempt
+          fully reconciled (L-2 and L-3 PASS), no uncleared halt, and a new policy-passing BUY. No
+          resubmission or parameter relaxation; the first fill ends the campaign. Attempts are counted
+          over all of chain-b by campaign, across sessions, manifests and restarts; campaign validity is
+          checked at issuance, CONSUME and PRESEND (R5-B3 H; R5-B3a H.2).                                    [UNADOPTED]
+  D-15    Executor exclusivity by an OS lease and EXECUTOR_START; idempotent recovery (R5-B3 E).             [UNADOPTED]
+
+PART 2. DEFERRED
+  OI-08   DEFER until the Stage A exit.
+  FD-8    DEFER (proposal: R5-B2 2.11).
+  OI-10   Superseded by D-10 if adopted.
+
+PART 3. AUTHORIZATIONS (none granted by this record)
+  D-9     NOT AUTHORIZED. Considered only after M1 verification, by a separate record. Scope: the six-GET
+          pre-flight tool only (R5-B3 G.4).
+  FD-9    NOT AUTHORIZED.
+  P23     NOT AUTHORIZED. When considered, it states max_attempts K and an expiry date (D-14).
+
+BOUNDARY
+  No modification of the active Stage A experiment. No credentials, Stage B implementation, order submission
+  or execution authority is granted.
+
+ADOPTION (founder completes)
+  Lines adopted as written: ______________________
+  Lines changed (state the change): ______________
+  Adopted by: Patrick Sullivan, Founder, Sentinel Labs LLC      Date/time: ______________
