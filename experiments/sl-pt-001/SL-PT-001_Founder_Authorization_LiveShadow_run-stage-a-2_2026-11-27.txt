@@ -1,0 +1,40 @@
+SL-PT-001 FOUNDER AUTHORIZATION RECORD: STAGE A LIVE SHADOW RUN 2 (ADOPTED)
+
+1. Authority
+   Frozen R4.2i (SHA-256 4259551121fa3d271074fb13da51fb270ae859b0b516a953752731f20972a51a); FD-5 v2; decision v5; FD-6 v2.3 (effective auditor
+   48629e8a4259ae09169cf4d9be59081e8aff25522306f04c99b89d94d55f0424, source founder-held); GPT auditor-interface
+   disposition 2026-11-27 (M1-1 streak within one manifest; qualifying injections across the audit scope; one
+   stage-a scope, chain and seed commitment for both manifests; fixtures reusable without extra credit).
+
+2. Pre-live gate
+   [MET] Unchanged from run-stage-a-1: harness listing 87b833b60969b8574a1704c4f304c91ee89b243779ea00e685dabea6b98ad07b (every listed file re-verified by
+         this script), wrapper 777216c23f7031752600929b1a16a9919a50b0cf7fbe69244d25c5dd411150a7, policy P-0.2 41a0e099ce36e3747bf41f999781cce61a932b9ead5d18d997a394e77a14004f.
+   [MET] Custody unchanged: audit-scopes/stage-a seed.sha256, auditor.sha256 and auditor-migration.json; no
+         scope.json, no seed reveal, no new commitment.
+   [MET] Chain head = run-stage-a-1 RUN_CLOSE a7367c27747b54c438eb1a025f8c03cd60640973719a17d52ac7ae6f8ccaeca2 (prev_chain_head of this manifest).
+   [MET at J2] Exported task XML checked against R4.2i section 6.1 before the manifest is pushed; task_xml_sha256 and
+         manifest SHA-256 recorded in J2's commit. If the check fails, the task is removed and this run does not occur.
+   [MET] PC clock: worst |offset| to time.windows.com = 0.1646286 s (V12b bound 2 s).
+
+3. What is authorized
+   One Stage A live SHADOW run, manifest runs/run-stage-a-2.json written by script J2:
+   - T_d0 = 2026-11-28T00:51:00Z (2026-11-27 19:51 EST), declared_slots N = 35,
+     last decision 2026-11-27 22:41 EST, run boundary T_d(N) = 2026-11-27 22:46 EST;
+   - keyless, read-only market-data requests to data.alpaca.markets only (bars and latest quote, section 4.2), via
+     the scheduled wrapper and the committed harness;
+   - shadow proposals only; every proposal ends REJECTED or SHADOW_EXPIRED; no order exists;
+   - no runtime injections are planned for this run (run-stage-a-1's six count across the audit scope).
+
+4. What is NOT authorized
+   Credentials of any kind in the harness environment or configuration; any connection to a trading host; any order,
+   cancel or account call; Stage B implementation or activation; any change to the frozen spec, policy, harness or
+   custody files during the run; scope.json or the seed reveal before this run's RUN_CLOSE.
+
+5. Stop conditions (founder runs cli stop, then reports)
+   Any V12a BOUNDARY_FAIL; any record the harness refuses to validate; any unexpected host contact; machine sleep or
+   restart during the run (slots become MISSING; the run is not restarted under the same manifest).
+
+6. Required limitation (section 2.3, verbatim)
+   "Disconnection from trading is asserted at the HTTP-client level only. Alternate egress paths in the process or
+   host (other libraries, raw sockets, proxies, inherited handles) were not excluded."
+Adopted by: Patrick Sullivan, Founder, Sentinel Labs LLC (typed AUTHORIZE in script J2)    Date/time: 2026-11-27 19:31:31 EST
